@@ -31,7 +31,6 @@ const { t, te } = useI18n()
 // and a `.role.*` prefix).
 const SETTING_DESC_IDS: Record<string, string> = {
   default_runner: 'defaultRunner',
-  max_parallel_runs: 'maxParallelRuns',
   default_timeout: 'defaultTimeout',
   git_sync_interval: 'gitSyncInterval',
   report_retention_days: 'reportRetentionDays',
@@ -442,7 +441,8 @@ onMounted(async () => {
   loading.value = true
   try {
     const [s, u] = await Promise.all([settingsApi.getSettings(), authApi.getUsers()])
-    settings.value = s
+    // V15.3: the executor is single-worker, so this knob was inert; ignore a legacy DB row.
+    settings.value = s.filter((x) => x.key !== 'max_parallel_runs')
     users.value = u
     for (const setting of s) {
       editedValues.value[setting.key] = setting.value

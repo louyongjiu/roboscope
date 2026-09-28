@@ -388,6 +388,7 @@ export default {
     target: 'Ziel',
     branch: 'Branch',
     runner: 'Runner',
+    attemptOf: 'Versuch {n} von {m}',
     noRuns: 'Noch keine Ausführungen.',
     runDialog: {
       title: 'Neuen Run starten',
@@ -400,6 +401,9 @@ export default {
       targetPath: 'Zielpfad',
       targetPlaceholder: 'tests/ oder tests/login.robot',
       timeout: 'Timeout (Sekunden)',
+      retries: 'Wiederholungen bei Fehlschlag',
+      retriesHint: 'Führt den gesamten Lauf erneut aus, wenn er fehlschlägt oder das Timeout erreicht. Jeder Versuch ist ein eigener Lauf mit eigenem Report.',
+      retriesDisabledAdvanced: 'Mit erweiterten Optionen nicht verfügbar.',
       environment: 'Umgebung',
       noEnv: 'Keine (ohne Umgebung)',
     },
@@ -917,7 +921,6 @@ export default {
     },
     descriptions: {
       defaultRunner: 'Standard-Runner-Typ (Subprocess oder Docker).',
-      maxParallelRuns: 'Maximale Anzahl paralleler Testläufe.',
       defaultTimeout: 'Standard-Timeout eines Laufs in Sekunden.',
       gitSyncInterval: 'Intervall der Git-Auto-Synchronisierung in Minuten.',
       reportRetentionDays: 'Anzahl Tage, die Berichte aufbewahrt werden.',

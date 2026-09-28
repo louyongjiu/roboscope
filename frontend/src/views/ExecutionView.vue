@@ -141,6 +141,7 @@ const runForm = ref({
   branch: 'main',
   runner_type: 'subprocess',
   timeout_seconds: 3600,
+  max_retries: 0,
   tags_include: '',
   tags_exclude: '',
 })
@@ -283,6 +284,32 @@ function getSelectedRun(): ExecutionRun | undefined {
   return execution.runs.find(r => r.id === selectedRunId.value)
 }
 
+// EXEC.3/EXEC.10: advanced_config as sent on submit (null when no lever is set).
+const advancedConfig = computed<Record<string, unknown> | null>(() => {
+  if (!showAdvanced.value) return null
+  const adv: Record<string, unknown> = {}
+  const args = parseArgs(advancedArgsText.value)
+  if (args.length) adv.args = args
+  const prerun = advancedModifiers.value
+    .filter((m) => m.kind === 'prerun')
+    .map((m) => ({ key: m.key, args: m.args }))
+  const prerebot = advancedModifiers.value
+    .filter((m) => m.kind === 'prerebot')
+    .map((m) => ({ key: m.key, args: m.args }))
+  const listeners = advancedModifiers.value
+    .filter((m) => m.kind === 'listener')
+    .map((m) => ({ key: m.key, args: m.args }))
+  if (prerun.length) adv.prerun_modifiers = prerun
+  if (prerebot.length) adv.prerebot_modifiers = prerebot
+  if (listeners.length) adv.listeners = listeners
+  if (advancedPythonPaths.value.length) adv.python_paths = advancedPythonPaths.value
+  if (advancedVariableFiles.value.length) adv.variable_files = advancedVariableFiles.value
+  // EXEC.10: code-loading levers only ever populate post-consent in the UI;
+  // pass the explicit consent token the server now requires for them.
+  if (adv.python_paths || adv.variable_files) adv.code_load_consent = true
+  return Object.keys(adv).length ? adv : null
+})
+
 function handleStartClick() {
   if (!runForm.value.environment_id && envs.environments.length === 0) {
     showEnvPrompt.value = true
@@ -302,28 +329,10 @@ async function doStartRun() {
     if (showAdvanced.value) {
       const variables = parseVariables(advancedVariablesText.value)
       if (variables) payload.variables = variables
-      const adv: Record<string, unknown> = {}
-      const args = parseArgs(advancedArgsText.value)
-      if (args.length) adv.args = args
-      const prerun = advancedModifiers.value
-        .filter((m) => m.kind === 'prerun')
-        .map((m) => ({ key: m.key, args: m.args }))
-      const prerebot = advancedModifiers.value
-        .filter((m) => m.kind === 'prerebot')
-        .map((m) => ({ key: m.key, args: m.args }))
-      const listeners = advancedModifiers.value
-        .filter((m) => m.kind === 'listener')
-        .map((m) => ({ key: m.key, args: m.args }))
-      if (prerun.length) adv.prerun_modifiers = prerun
-      if (prerebot.length) adv.prerebot_modifiers = prerebot
-      if (listeners.length) adv.listeners = listeners
-      if (advancedPythonPaths.value.length) adv.python_paths = advancedPythonPaths.value
-      if (advancedVariableFiles.value.length) adv.variable_files = advancedVariableFiles.value
-      // EXEC.10: code-loading levers only ever populate post-consent in the UI;
-      // pass the explicit consent token the server now requires for them.
-      if (adv.python_paths || adv.variable_files) adv.code_load_consent = true
-      if (Object.keys(adv).length) payload.advanced_config = adv
+      if (advancedConfig.value) payload.advanced_config = advancedConfig.value
     }
+    // V15.3: the server refuses retries together with advanced options.
+    if (payload.advanced_config) payload.max_retries = 0
     const run = await execution.startRun(payload as typeof runForm.value)
     toast.success(t('execution.toasts.started'), t('execution.toasts.startedMsg', { id: run.id }))
     showRunDialog.value = false
@@ -547,6 +556,9 @@ function isTerminal(status: string): boolean {
               <span class="status-cell">
                 <span v-if="run.status === 'running' || run.status === 'pending'" class="inline-spinner"></span>
                 <BaseBadge :status="run.status" />
+                <span v-if="run.max_retries > 0 || run.retry_count > 0" class="text-muted text-sm" data-testid="run-attempt">
+                  {{ t('execution.attemptOf', { n: run.retry_count + 1, m: Math.max(run.max_retries, run.retry_count) + 1 }) }}
+                </span>
               </span>
             </td>
             <td class="text-muted text-sm">{{ formatTimeAgo(run.created_at) }}</td>
@@ -774,6 +786,13 @@ function isTerminal(status: string): boolean {
           <div class="form-group">
             <label class="form-label">{{ t('execution.runDialog.timeout') }}</label>
             <input v-model.number="runForm.timeout_seconds" type="number" class="form-input" min="30" max="86400" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">{{ t('execution.runDialog.retries') }}</label>
+            <select v-model.number="runForm.max_retries" class="form-select" :disabled="!!advancedConfig" data-testid="run-max-retries">
+              <option v-for="n in [0, 1, 2, 3]" :key="n" :value="n">{{ n }}</option>
+            </select>
+            <span class="text-muted text-sm">{{ advancedConfig ? t('execution.runDialog.retriesDisabledAdvanced') : t('execution.runDialog.retriesHint') }}</span>
           </div>
           <datalist id="run-repo-tags">
             <option v-for="tag in repoTags" :key="tag" :value="tag" />

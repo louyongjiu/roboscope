@@ -11,7 +11,6 @@ from src.settings.schemas import SettingUpdate
 # Default settings to seed on first start
 DEFAULT_SETTINGS = [
     {"key": "default_runner", "value": "subprocess", "value_type": "string", "category": "execution", "description": "Default runner type (subprocess or docker)"},
-    {"key": "max_parallel_runs", "value": "4", "value_type": "int", "category": "execution", "description": "Maximum parallel test runs"},
     {"key": "default_timeout", "value": "3600", "value_type": "int", "category": "execution", "description": "Default timeout in seconds"},
     {"key": "git_sync_interval", "value": "15", "value_type": "int", "category": "git", "description": "Git auto-sync interval in minutes"},
     {"key": "report_retention_days", "value": "90", "value_type": "int", "category": "retention", "description": "Days to keep reports"},

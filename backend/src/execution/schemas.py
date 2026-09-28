@@ -3,7 +3,7 @@
 from datetime import datetime
 
 from apscheduler.triggers.cron import CronTrigger
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 from src.execution.models import RunnerType, RunStatus, RunType
 
@@ -25,6 +25,17 @@ class RunCreate(BaseModel):
     parallel: bool = False
     max_retries: int = Field(default=0, ge=0, le=5)
     timeout_seconds: int = Field(default=3600, ge=30, le=86400)
+
+    @model_validator(mode="after")
+    def _v15_3_run_options(self) -> "RunCreate":
+        # V15.3: pabot is out of scope; `false` stays accepted for old clients.
+        if self.parallel:
+            raise ValueError("Parallel execution is not supported")
+        # Auto-retry runs in the background without request context, so it can
+        # never re-pass gate_advanced_execution: refuse the combination.
+        if self.max_retries > 0 and self.advanced_config:
+            raise ValueError("Retries are not available with advanced options")
+        return self
 
 
 class RunResponse(BaseModel):

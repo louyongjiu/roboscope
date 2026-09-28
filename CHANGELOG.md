@@ -14,6 +14,20 @@
   container runs `python -m robot`) plus your test libraries. Both actions need
   the Docker-build permission and are unavailable when package management is
   disabled.
+- **Automatic retries on failure**: the run dialog has a *Retries on failure*
+  option (0–3). A run that ends `failed` or `timeout` re-executes the whole run
+  until it passes or the retries are used up; passed, cancelled and errored runs
+  are never retried. Each attempt is its own run and report, labelled
+  "Attempt n of m" in the runs table and run details. A retry of a scheduled run
+  stays linked to its schedule, so the next slot never overlaps it. Retries are
+  refused together with advanced run options (422).
+
+### Removed
+
+- **Inert run options**: `parallel: true` on `POST /runs` now returns 422
+  ("Parallel execution is not supported"; `false` is still accepted), and the
+  `max_parallel_runs` setting is no longer seeded or shown — the executor has
+  always run one task at a time.
 
 ## [0.14.0] - 2026-09-24
 

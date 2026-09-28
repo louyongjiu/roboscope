@@ -1145,6 +1145,15 @@ Recording 21
   \u00DCber den <strong>Wiederholen</strong>-Button wird ein neuer Run mit identischen
   Parametern (Repository, Zielpfad, Timeout) gestartet. Der urspr\u00FCngliche
   Run bleibt im Verlauf erhalten.
+</p>
+<h4>Automatische Wiederholungen</h4>
+<p>
+  <strong>Wiederholungen bei Fehlschlag</strong> im Run-Dialog (0&ndash;3) f\u00FChrt den
+  <em>gesamten</em> Run automatisch erneut aus, wenn er mit <code>failed</code> oder
+  <code>timeout</code> endet &mdash; nicht nur die fehlgeschlagenen Tests. Erfolgreiche,
+  abgebrochene und fehlerhafte (<code>error</code>) Runs werden nie wiederholt. Jeder Versuch
+  erscheint als eigener Run mit eigenem Report (&bdquo;Versuch n von m&ldquo;). Mit erweiterten
+  Optionen sind Wiederholungen nicht verf\u00FCgbar.
 </p>`,
         tip: 'Abgebrochene Runs erzeugen keine Reports. Wenn der Prozess bereits Teilergebnisse geschrieben hat, werden diese nicht verarbeitet.'
       },

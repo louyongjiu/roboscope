@@ -305,3 +305,80 @@ test.describe('Execution Run — UI Tests', () => {
     await expect(page.getByRole('button', { name: 'stderr' })).toBeVisible();
   });
 });
+
+// ─── V15.3: automatic retries on failure ──────────────────────────────────────
+
+test.describe.serial('Execution Run — auto-retry (V15.3)', () => {
+  let token: string;
+  let repoId: number;
+  const stamp = Date.now();
+
+  test.beforeAll(async ({ browser }) => {
+    const page = await browser.newPage();
+    token = await getAuthToken(page);
+    const res = await page.request.post(`${API}/repos`, {
+      headers: { Authorization: `Bearer ${token}` },
+      data: { name: `retry-e2e-${stamp}`, repo_type: 'local', local_path: `/tmp/roboscope-retry-${stamp}` },
+    });
+    expect(res.status()).toBe(201);
+    repoId = (await res.json()).id as number;
+    const fr = await page.request.post(`${API}/explorer/${repoId}/file`, {
+      headers: { Authorization: `Bearer ${token}` },
+      data: { path: 'tests/always_fails.robot', content: '*** Test Cases ***\nAlways Fails\n    Fail    boom\n' },
+    });
+    expect(fr.status()).toBeLessThan(300);
+    await page.close();
+  });
+
+  test.afterAll(async ({ browser }) => {
+    const page = await browser.newPage();
+    const t = await getAuthToken(page);
+    await cancelAllRuns(page, t);
+    await page.request.delete(`${API}/repos/${repoId}`, { headers: { Authorization: `Bearer ${t}` } });
+    await page.close();
+  });
+
+  test('a failing run with retries = 1 is re-run exactly once', async ({ page }) => {
+    test.setTimeout(480_000); // two runs through the single-worker queue
+    await loginAndGoToDashboard(page);
+    await page.goto('/runs');
+    await expect(page.locator('h1', { hasText: 'Ausführung' })).toBeVisible({ timeout: 10_000 });
+
+    await page.getByRole('button', { name: /Neuer Run/ }).click();
+    await expect(page.getByText('Neuen Run starten')).toBeVisible();
+    await page.locator('.modal select').first().selectOption(String(repoId));
+    await page.getByPlaceholder('tests/ oder tests/login.robot').fill('tests/always_fails.robot');
+    await page.getByTestId('run-max-retries').selectOption('1');
+    await page.getByRole('button', { name: 'Starten', exact: true }).click();
+    await dismissRunDialog(page);
+    await expect(page.getByText('Neuen Run starten')).not.toBeVisible({ timeout: 5000 });
+
+    const listRuns = async () => {
+      const res = await page.request.get(`${API}/runs?repository_id=${repoId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      return (await res.json()).items as any[];
+    };
+
+    // Poll until the retry exists (the first attempt runs behind the global queue).
+    let runs: any[] = [];
+    for (let i = 0; i < 110 && runs.length < 2; i++) {
+      await page.waitForTimeout(2000);
+      runs = await listRuns();
+    }
+    expect(runs).toHaveLength(2);
+    const retry = runs.find((r) => r.retry_count === 1);
+    expect(retry).toBeTruthy();
+    expect(retry.max_retries).toBe(1);
+    const done = await pollRunToCompletion(page, token, retry.id);
+    expect(['failed', 'error']).toContain(done.status);
+
+    // The chain ends at retry_count == max_retries: no third run appears.
+    await page.waitForTimeout(5000);
+    expect(await listRuns()).toHaveLength(2);
+
+    await page.reload();
+    const row = page.locator('.data-table').first().locator('tr', { hasText: `#${retry.id}` });
+    await expect(row.getByTestId('run-attempt')).toHaveText('Versuch 2 von 2', { timeout: 10_000 });
+  });
+});
