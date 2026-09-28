@@ -70,6 +70,9 @@ def test_prerun_modifier_is_separate_from_denied_advanced_args():
         "-Vx.py",
         "-Aargs.txt",
         "--Listen",  # capitalised abbreviation
+        # V15.1: xunit is produced post hoc by rebot, never by a run.
+        "--xunit",
+        "-x",
     ],
 )
 def test_advanced_args_reject_code_loading_vectors(token):
@@ -150,3 +153,10 @@ def test_parity_holds_with_advanced_config():
         return rest
 
     assert flags_only(sub) == flags_only(dock)
+
+
+def test_build_robot_argv_never_emits_xunit():
+    # V15.1 seam pin: JUnit export is a post-hoc rebot call, not a run flag.
+    spec = resolve_run_spec(target_path="s.robot", advanced_args=["--randomize", "all"])
+    argv = build_robot_argv(spec, python="python", output_dir="/out")
+    assert "--xunit" not in argv and "-x" not in argv

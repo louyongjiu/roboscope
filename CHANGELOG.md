@@ -20,6 +20,14 @@
   Names the environment does not define are marked orange with a tooltip; refs
   with an inline default stay neutral. It is a warning only, since the server's
   own environment may still provide the variable. Only names are read, never values.
+- **JUnit/xUnit report export**: "Export JUnit" next to "Export CSV"/"Export JSON"
+  (report detail and run panel) downloads `report_<id>_xunit.xml`, Robot
+  Framework's own xUnit output converted with `rebot`, for Jenkins, GitLab and
+  Azure DevOps test dashboards. Also available as
+  `GET /api/v1/reports/{id}/export?format=junit`. Works for uploaded reports and
+  Docker runs; returns 404 when `output.xml` is gone (retention) and 422 when it
+  cannot be converted. Runs still never emit `--xunit`, and advanced run args
+  still reject it.
 
 ## [0.14.0] - 2026-09-24
 

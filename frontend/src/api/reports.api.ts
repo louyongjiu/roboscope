@@ -72,12 +72,29 @@ export async function getReportTests(id: number, status?: string): Promise<TestR
   return response.data
 }
 
-export async function exportReportResults(id: number, format: 'csv' | 'json'): Promise<Blob> {
-  const response = await apiClient.get(`/reports/${id}/export`, {
-    params: { format },
-    responseType: 'blob',
-  })
-  return response.data
+export type ReportExportFormat = 'csv' | 'json' | 'junit'
+
+export async function exportReportResults(id: number, format: ReportExportFormat): Promise<Blob> {
+  try {
+    const response = await apiClient.get(`/reports/${id}/export`, {
+      params: { format },
+      responseType: 'blob',
+    })
+    return response.data
+  } catch (e) {
+    // responseType 'blob' also wraps the error body: unwrap it so callers
+    // can read FastAPI's `{ detail }` via extractErrorDetail.
+    const res = (e as { response?: { data?: unknown } }).response
+    if (res?.data instanceof Blob) {
+      try { res.data = JSON.parse(await res.data.text()) } catch { /* keep blob */ }
+    }
+    throw e
+  }
+}
+
+/** Download filename for a report export (`junit` -> `report_<id>_xunit.xml`). */
+export function reportExportFilename(id: number, format: ReportExportFormat): string {
+  return format === 'junit' ? `report_${id}_xunit.xml` : `report_${id}_results.${format}`
 }
 
 export async function deleteReport(id: number): Promise<void> {

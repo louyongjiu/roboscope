@@ -4,7 +4,7 @@ import { crc32 } from 'node:zlib';
 import { loginViaApi } from '../helpers';
 
 /**
- * V14.3 + V14.4 — export a report's results as CSV/JSON and delete a single
+ * V14.3 + V14.4 + V15.1 — export a report's results as CSV/JSON/JUnit and delete a single
  * report, against the real backend (upload → export → delete → gone).
  */
 const API = 'http://localhost:8000/api/v1';
@@ -83,6 +83,16 @@ test.describe('Report export + single delete', () => {
       page.getByTestId('export-json').click(),
     ]);
     expect(json.suggestedFilename()).toBe(`report_${reportId}_results.json`);
+
+    // V15.1: JUnit/xUnit via rebot on the stored output.xml
+    const [junit] = await Promise.all([
+      page.waitForEvent('download'),
+      page.getByTestId('export-junit').click(),
+    ]);
+    expect(junit.suggestedFilename()).toBe(`report_${reportId}_xunit.xml`);
+    const junitText = readFileSync(await junit.path(), 'utf-8');
+    expect(junitText).toContain('<testsuite');
+    expect(junitText).toContain('failures="1"');
 
     page.once('dialog', (d) => d.accept());
     await page.getByTestId('delete-report').click();

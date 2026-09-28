@@ -671,6 +671,8 @@ export default {
     downloadZip: 'Télécharger ZIP',
     exportCsv: 'Exporter CSV',
     exportJson: 'Exporter JSON',
+    exportJunit: 'Exporter JUnit',
+    exportFailed: 'Échec de l\'export',
     reloadReport: 'Recharger',
     openInNewTab: 'Ouvrir dans un nouvel onglet',
     notFound: 'Aucun rapport trouvé pour l\'id {id}.',

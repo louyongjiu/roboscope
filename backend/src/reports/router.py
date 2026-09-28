@@ -50,6 +50,7 @@ from src.reports.service import (
     get_test_results,
     list_reports,
     list_unique_tests,
+    render_xunit,
 )
 
 logger = logging.getLogger("roboscope.reports")
@@ -681,13 +682,29 @@ def _csv_safe(value: object) -> object:
 @router.get("/{report_id}/export")
 def export_report_results(
     report_id: int,
-    format: Literal["csv", "json"] = Query(...),
+    format: Literal["csv", "json", "junit"] = Query(...),
     db: Session = Depends(get_db),
     _current_user: User = Depends(get_current_user),
 ):
-    """Download a report's test results as CSV or JSON."""
-    if get_report(db, report_id) is None:
+    """Download a report's test results as CSV, JSON or JUnit/xUnit XML."""
+    report = get_report(db, report_id)
+    if report is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Report not found")
+
+    if format == "junit":
+        try:
+            body = render_xunit(report.output_xml_path)
+        except FileNotFoundError:
+            raise HTTPException(status_code=404, detail="output.xml not found") from None
+        except ValueError as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
+        return Response(
+            content=body,
+            media_type="application/xml",
+            headers={
+                "Content-Disposition": f'attachment; filename="report_{report_id}_xunit.xml"'
+            },
+        )
 
     rows = [
         TestResultResponse.model_validate(r).model_dump(mode="json")

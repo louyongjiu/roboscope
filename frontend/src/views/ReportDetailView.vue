@@ -4,7 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useReportsStore } from '@/stores/reports.store'
 import { useAiStore } from '@/stores/ai.store'
-import { getReportHtmlBlobUrl, getReportZipBlobUrl, getMissingLibraries, exportReportResults } from '@/api/reports.api'
+import { getReportHtmlBlobUrl, getReportZipBlobUrl, getMissingLibraries, exportReportResults, reportExportFilename, type ReportExportFormat } from '@/api/reports.api'
 import { useAuthStore } from '@/stores/auth.store'
 import { useToast } from '@/composables/useToast'
 import { downloadBlob } from '@/utils/download'
@@ -90,8 +90,13 @@ async function downloadZip() {
   URL.revokeObjectURL(blobUrl)
 }
 
-async function exportResults(format: 'csv' | 'json') {
-  downloadBlob(await exportReportResults(reportId.value, format), `report_${reportId.value}_results.${format}`)
+async function exportResults(format: ReportExportFormat) {
+  const id = reportId.value
+  try {
+    downloadBlob(await exportReportResults(id, format), reportExportFilename(id, format))
+  } catch (e) {
+    toast.error(t('reportDetail.exportFailed'), extractErrorDetail(e, t('common.error')))
+  }
 }
 
 const deletingReport = ref(false)
@@ -205,6 +210,9 @@ async function startAnalysis() {
         </BaseButton>
         <BaseButton variant="secondary" data-testid="export-json" @click="exportResults('json')">
           {{ t('reportDetail.exportJson') }}
+        </BaseButton>
+        <BaseButton variant="secondary" data-testid="export-junit" @click="exportResults('junit')">
+          {{ t('reportDetail.exportJunit') }}
         </BaseButton>
         <BaseButton
           v-if="auth.hasMinRole('editor')"
