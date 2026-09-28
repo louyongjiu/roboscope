@@ -1170,6 +1170,14 @@ Recording 21
   <code>timeout</code>), a <strong>Retry</strong> button appears. Clicking it creates a new
   run with the same configuration (repository, target, timeout) and queues it for execution.
 </p>
+<h4>Automatic retries</h4>
+<p>
+  <strong>Retries on failure</strong> in the run dialog (0&ndash;3) re-executes the
+  <em>whole</em> run automatically when it ends <code>failed</code> or <code>timeout</code>
+  &mdash; it is not a rerun of only the failed tests. Passed, cancelled and errored runs are
+  never retried. Each attempt appears as its own run with its own report, labelled
+  &ldquo;Attempt n of m&rdquo;. Retries are not available together with advanced options.
+</p>
 <h4>Cancel All Runs</h4>
 <p>
   The <strong>Cancel All</strong> button at the top of the Execution page terminates

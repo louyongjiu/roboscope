@@ -1182,6 +1182,14 @@ Recording 21
   la misma configuraci\u00F3n (repositorio, destino, tiempo de espera) y se pone
   en cola para su ejecuci\u00F3n.
 </p>
+<h4>Reintentos autom\u00E1ticos</h4>
+<p>
+  <strong>Reintentos en caso de fallo</strong> (0&ndash;3) en el di\u00E1logo de ejecuci\u00F3n vuelve a
+  ejecutar autom\u00E1ticamente la ejecuci\u00F3n <em>completa</em> cuando termina en
+  <code>failed</code> o <code>timeout</code> &mdash; no solo las pruebas fallidas. Las ejecuciones
+  correctas, canceladas o con error nunca se reintentan. Cada intento aparece como una ejecuci\u00F3n
+  propia con su propio informe (&laquo;Intento n de m&raquo;). No disponible con opciones avanzadas.
+</p>
 <h4>Cancelar todas las ejecuciones</h4>
 <p>
   El bot\u00F3n <strong>Cancelar todo</strong> en la parte superior de la p\u00E1gina

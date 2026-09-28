@@ -1155,6 +1155,15 @@ Recording 21
   Cliquer dessus cr\u00E9e une nouvelle ex\u00E9cution avec la m\u00EAme configuration (d\u00E9p\u00F4t, cible,
   d\u00E9lai) et la met en file d\u2019attente.
 </p>
+<h4>Nouvelles tentatives automatiques</h4>
+<p>
+  <strong>Nouvelles tentatives en cas d\u2019\u00E9chec</strong> (0&ndash;3) dans la bo\u00EEte de
+  lancement relance automatiquement l\u2019ex\u00E9cution <em>compl\u00E8te</em> lorsqu\u2019elle se
+  termine en <code>failed</code> ou <code>timeout</code> &mdash; pas seulement les tests en \u00E9chec.
+  Les ex\u00E9cutions r\u00E9ussies, annul\u00E9es ou en erreur ne sont jamais relanc\u00E9es. Chaque
+  tentative appara\u00EEt comme une ex\u00E9cution distincte avec son propre rapport
+  (&laquo;&nbsp;Tentative n sur m&nbsp;&raquo;). Indisponible avec les options avanc\u00E9es.
+</p>
 <h4>Annuler toutes les ex\u00E9cutions</h4>
 <p>
   Le bouton <strong>Tout annuler</strong> en haut de la page Ex\u00E9cution termine toutes les

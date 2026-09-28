@@ -1,6 +1,6 @@
 # Story V15.3: Inert run options: wire up `max_retries`, retire `parallel`
 
-Status: ready-for-dev
+Status: review
 
 Epic: V15 — Follow-through on 0.14 (`_bmad-output/planning-artifacts/v015-epics.md`)
 Story Key: `v15-3-inert-run-options-retry-and-parallel`
@@ -42,14 +42,14 @@ Hide `max_parallel_runs`. The DB columns stay, so no migration is needed.
 
 ## Tasks / Subtasks
 
-- [ ] `execution/schemas.py`: `@model_validator(mode="after")` on `RunCreate` for AC3 and AC4
-- [ ] `execution/tasks.py`: `_maybe_auto_retry(session, run) -> None`, called after the `parse_report` block and before `return` in the
+- [x] `execution/schemas.py`: `@model_validator(mode="after")` on `RunCreate` for AC3 and AC4
+- [x] `execution/tasks.py`: `_maybe_auto_retry(session, run) -> None`, called after the `parse_report` block and before `return` in the
       success path. Wrap it in try/except plus `logger.exception`: a retry failure must never flip the finished run's status. (AC1, AC2)
-- [ ] `settings/service.py`: remove the `max_parallel_runs` seed entry. `SettingsView.vue`: remove the mapping and filter out the key (AC6)
-- [ ] `ExecutionView.vue`: retries select, payload, attempt label. `RunDetailPanel.vue`: attempt label (AC5)
-- [ ] `types/api.types.ts`: remove `parallel` from the create payload type
-- [ ] i18n `execution.runDialog.retries`, `retriesHint`, `retriesDisabledAdvanced`, `execution.attemptOf` (`{n}`/`{m}` params) in EN/DE/FR/ES
-- [ ] Docs paragraph in the execution section of all 4 doc locales (AC7)
+- [x] `settings/service.py`: remove the `max_parallel_runs` seed entry. `SettingsView.vue`: remove the mapping and filter out the key (AC6)
+- [x] `ExecutionView.vue`: retries select, payload, attempt label. `RunDetailPanel.vue`: attempt label (AC5)
+- [x] `types/api.types.ts`: remove `parallel` from the create payload type
+- [x] i18n `execution.runDialog.retries`, `retriesHint`, `retriesDisabledAdvanced`, `execution.attemptOf` (`{n}`/`{m}` params) in EN/DE/FR/ES
+- [x] Docs paragraph in the execution section of all 4 doc locales (AC7)
 
 ## Dev Notes
 
@@ -92,8 +92,46 @@ Hide `max_parallel_runs`. The DB columns stay, so no migration is needed.
 
 ### Agent Model Used
 
+Claude Opus 5.5 (claude-opus-5-5)
+
 ### Debug Log References
+
+- Backend: `SECRET_KEY=test .venv/bin/pytest -q -n auto` (2484 passed incl. 11 new; tripwire green).
+- Frontend: `vue-tsc --noEmit` clean, `vitest run` 926 passed (3 new), `vite build` OK. E2E written, not run (per instructions).
 
 ### Completion Notes List
 
+- AC1/AC2: `tasks.py::_maybe_auto_retry` runs after `parse_report` in the success path only (cancel and exception paths return
+  earlier, so CANCELLED/ERROR never reach it); guarded by try/except + `logger.exception` + `session.rollback()`. Reuses
+  `service.retry_run`, copies `schedule_id`, commits before `dispatch_task`. A `TaskDispatchError` marks the retry ERROR
+  (mirrors `start_run` H3) instead of stranding it in PENDING. No pending broadcast: `start_run` doesn't broadcast either;
+  the retry's RUNNING broadcast refreshes the list.
+- AC3/AC4: `RunCreate` model validator; the 422 fires during body validation, before `gate_advanced_execution` (pinned).
+- AC5: the run dialog derives `advancedConfig` as a computed (the former inline builder, unchanged behaviour) so the retries
+  select can disable itself; the payload forces `max_retries: 0` when advanced config is sent.
+  **Deviation:** the attempt label uses `m = max(max_retries, retry_count) + 1` so a manual retry past the budget never reads
+  "Attempt 2 of 1".
+- AC6: seed entry + Settings mapping removed, legacy row filtered in `SettingsView.vue`; `maxParallelRuns` i18n description
+  removed from all 5 locales. `e2e/tests/settings-unsaved-changes.spec.ts` used `max_parallel_runs` as its int fixture row;
+  switched to `default_timeout`.
+- `test_service.py::test_create_run_with_all_fields` used `parallel=True`; now asserts the default `False`.
+- AC7: "Automatic retries" paragraph added under the existing Retry text in the execution docs (EN/DE/FR/ES), no new ids.
+
 ### File List
+
+- backend/src/execution/schemas.py
+- backend/src/execution/tasks.py
+- backend/src/settings/service.py
+- backend/tests/execution/test_auto_retry.py (new)
+- backend/tests/execution/test_service.py
+- backend/tests/settings/test_service.py
+- frontend/src/views/ExecutionView.vue
+- frontend/src/views/SettingsView.vue
+- frontend/src/components/execution/RunDetailPanel.vue
+- frontend/src/types/api.types.ts
+- frontend/src/i18n/locales/{en,de,fr,es,zh}.ts
+- frontend/src/docs/content/{en,de,fr,es}.ts
+- frontend/src/tests/components/RunRetries.spec.ts (new)
+- e2e/tests/execution-run.spec.ts
+- e2e/tests/settings-unsaved-changes.spec.ts
+- CHANGELOG.md

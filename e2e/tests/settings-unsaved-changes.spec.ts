@@ -14,8 +14,8 @@ test.describe('Settings — unsaved changes bar', () => {
     await expect(page.locator('h1', { hasText: 'Einstellungen' })).toBeVisible({ timeout: 10_000 });
   });
 
-  // The max_parallel_runs setting is a plain int input under the General tab.
-  const row = (page) => page.locator('.setting-row', { hasText: 'max_parallel_runs' });
+  // The default_timeout setting is a plain int input under the General tab.
+  const row = (page) => page.locator('.setting-row', { hasText: 'default_timeout' });
   const input = (page) => row(page).locator('input');
 
   test('bar appears on edit, shows the row marker, and discard reverts', async ({ page }) => {

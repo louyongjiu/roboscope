@@ -283,7 +283,12 @@ watch(() => props.run.status, (newStatus, oldStatus) => {
         </div>
         <div class="info-item">
           <span class="info-label">{{ t('common.status') }}</span>
-          <span class="info-value"><BaseBadge :status="run.status" /></span>
+          <span class="info-value">
+            <BaseBadge :status="run.status" />
+            <span v-if="run.max_retries > 0 || run.retry_count > 0" class="text-muted text-sm" data-testid="run-detail-attempt">
+              {{ t('execution.attemptOf', { n: run.retry_count + 1, m: Math.max(run.max_retries, run.retry_count) + 1 }) }}
+            </span>
+          </span>
         </div>
         <div class="info-item">
           <span class="info-label">{{ t('execution.branch') }}</span>

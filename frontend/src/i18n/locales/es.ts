@@ -388,6 +388,7 @@ export default {
     target: 'Destino',
     branch: 'Rama',
     runner: 'Runner',
+    attemptOf: 'Intento {n} de {m}',
     noRuns: 'Aún no hay ejecuciones.',
     runDialog: {
       title: 'Iniciar nuevo run',
@@ -400,6 +401,9 @@ export default {
       targetPath: 'Ruta destino',
       targetPlaceholder: 'tests/ o tests/login.robot',
       timeout: 'Timeout (segundos)',
+      retries: 'Reintentos en caso de fallo',
+      retriesHint: 'Vuelve a ejecutar toda la ejecución si falla o supera el tiempo límite. Cada intento es una ejecución propia con su propio informe.',
+      retriesDisabledAdvanced: 'No disponible con opciones avanzadas.',
       environment: 'Entorno',
       noEnv: 'Ninguno (sin entorno)',
     },
@@ -919,7 +923,6 @@ export default {
     },
     descriptions: {
       defaultRunner: 'Tipo de runner predeterminado (subprocess o Docker).',
-      maxParallelRuns: 'Número máximo de ejecuciones de pruebas en paralelo.',
       defaultTimeout: 'Tiempo de espera predeterminado de una ejecución, en segundos.',
       gitSyncInterval: 'Intervalo de sincronización automática de Git, en minutos.',
       reportRetentionDays: 'Número de días para conservar los informes.',
