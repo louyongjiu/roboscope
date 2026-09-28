@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.15.0] - 2026-09-28
+
 ### Added
 
 - **Custom Dockerfile and your own container image**: in an environment's Docker
@@ -35,6 +37,14 @@
   "Attempt n of m" in the runs table and run details. A retry of a scheduled run
   stays linked to its schedule, so the next slot never overlaps it. Retries are
   refused together with advanced run options (422).
+
+### Fixed
+
+- **The environment chosen when adding a project was ignored**: the "Default
+  environment" picked in the add-project dialog (and "pre-run sync" for Git
+  projects) was sent to the server but not stored, so new projects ran against
+  the global default environment until someone changed it on the project card.
+  Both settings are now saved on creation.
 
 ### Removed
 

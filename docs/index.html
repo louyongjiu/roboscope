@@ -813,7 +813,7 @@
       <div class="feature-card fade-up">
         <div class="feature-icon feature-icon-blue">&#x1F680;</div>
         <h3 data-i18n="features.exec.title">Test Execution</h3>
-        <p data-i18n="features.exec.desc">Subprocess or Docker, live WebSocket updates, cron scheduling, and a governed Advanced mode for variables, validated robot arguments and curated modifiers &mdash; start and monitor tests directly from the browser.</p>
+        <p data-i18n="features.exec.desc">Subprocess or Docker (your own Dockerfile or image), live WebSocket updates, cron scheduling with automatic retries, and a governed Advanced mode for variables, validated robot arguments and curated modifiers &mdash; start and monitor tests directly from the browser.</p>
       </div>
       <div class="feature-card fade-up fade-up-delay-1">
         <div class="feature-icon feature-icon-blue">&#x1F4C1;</div>
@@ -828,7 +828,7 @@
       <div class="feature-card fade-up fade-up-delay-1">
         <div class="feature-icon feature-icon-amber">&#x1F4CA;</div>
         <h3 data-i18n="features.reports.title">Reports &amp; Deep Analysis</h3>
-        <p data-i18n="features.reports.desc">Auto-parse output.xml, export results as CSV/JSON. Detect trends, find flaky tests, 15 KPIs across 5 categories in the deep analysis.</p>
+        <p data-i18n="features.reports.desc">Auto-parse output.xml, export results as CSV/JSON/JUnit. Detect trends, find flaky tests, 15 KPIs across 5 categories in the deep analysis.</p>
       </div>
       <div class="feature-card fade-up fade-up-delay-2">
         <div class="feature-icon feature-icon-purple">&#x1F916;</div>
@@ -1150,13 +1150,13 @@ const T = {
     'features.title': 'Everything you need',
     'features.subtitle': 'Robot Framework test management in a modern web interface',
     'features.exec.title': 'Test Execution',
-    'features.exec.desc': 'Subprocess or Docker, live WebSocket updates, cron scheduling, and a governed Advanced mode for variables, validated robot arguments and curated modifiers \u2014 start and monitor tests directly from the browser.',
+    'features.exec.desc': 'Subprocess or Docker (your own Dockerfile or image), live WebSocket updates, cron scheduling with automatic retries, and a governed Advanced mode for variables, validated robot arguments and curated modifiers \u2014 start and monitor tests directly from the browser.',
     'features.git.title': 'Project & Git Management',
     'features.git.desc': 'Clone repos, switch branches, auto-sync. Integrated code explorer with Robot parser and CodeMirror editor.',
     'features.env.title': 'Environment Management',
     'features.env.desc': 'Create Python environments with uv, reuse RoboScope\u2019s own Python or import an existing venv. Install packages, set variables, run library checks.',
     'features.reports.title': 'Reports & Deep Analysis',
-    'features.reports.desc': 'Auto-parse output.xml, export results as CSV/JSON. Detect trends, find flaky tests, 15 KPIs across 5 categories in the deep analysis.',
+    'features.reports.desc': 'Auto-parse output.xml, export results as CSV/JSON/JUnit. Detect trends, find flaky tests, 15 KPIs across 5 categories in the deep analysis.',
     'features.ai.title': 'AI Failure Analysis',
     'features.ai.desc': 'LLM-powered root cause analysis and .roboscope \u2192 .robot generation. OpenAI, Anthropic, OpenRouter, or Ollama.',
     'features.rbac.title': 'Roles & Access Control',
@@ -1231,13 +1231,13 @@ const T = {
     'features.title': 'Alles, was du brauchst',
     'features.subtitle': 'Robot Framework Testmanagement in einer modernen Web-Oberfl\u00e4che',
     'features.exec.title': 'Test Execution',
-    'features.exec.desc': 'Subprocess oder Docker, Live-WebSocket-Updates, Cron-Scheduling und ein abgesicherter Advanced-Modus f\u00fcr Variablen, validierte robot-Argumente und kuratierte Modifier \u2014 Tests direkt aus dem Browser starten und beobachten.',
+    'features.exec.desc': 'Subprocess oder Docker (eigenes Dockerfile oder Image), Live-WebSocket-Updates, Cron-Scheduling mit automatischen Wiederholungen und ein abgesicherter Advanced-Modus f\u00fcr Variablen, validierte robot-Argumente und kuratierte Modifier \u2014 Tests direkt aus dem Browser starten und beobachten.',
     'features.git.title': 'Projekt & Git Management',
     'features.git.desc': 'Repos klonen, Branches wechseln, automatisch synchronisieren. Integrierter Code-Explorer mit Robot-Parser und CodeMirror-Editor.',
     'features.env.title': 'Environment Management',
     'features.env.desc': 'Python-Umgebungen mit uv erstellen, RoboScopes eigenes Python nutzen oder ein bestehendes venv importieren. Pakete installieren, Variablen setzen, Library-Checks.',
     'features.reports.title': 'Reports & Tiefenanalyse',
-    'features.reports.desc': 'output.xml automatisch parsen, Ergebnisse als CSV/JSON exportieren. Trends erkennen, Flaky Tests aufsp\u00fcren, 15 KPIs in 5 Kategorien in der Tiefenanalyse.',
+    'features.reports.desc': 'output.xml automatisch parsen, Ergebnisse als CSV/JSON/JUnit exportieren. Trends erkennen, Flaky Tests aufsp\u00fcren, 15 KPIs in 5 Kategorien in der Tiefenanalyse.',
     'features.ai.title': 'KI-Fehleranalyse',
     'features.ai.desc': 'LLM-gest\u00fctzte Root-Cause-Analyse und .roboscope \u2192 .robot Generierung. OpenAI, Anthropic, OpenRouter oder Ollama.',
     'features.rbac.title': 'Rollen & Zugriff',
@@ -1312,13 +1312,13 @@ const T = {
     'features.title': 'Tout ce dont vous avez besoin',
     'features.subtitle': 'Gestion des tests Robot Framework dans une interface web moderne',
     'features.exec.title': 'Ex\u00e9cution de tests',
-    'features.exec.desc': 'Subprocess ou Docker, mises \u00e0 jour WebSocket en direct, planification cron et un mode avanc\u00e9 encadr\u00e9 pour variables, arguments robot valid\u00e9s et modificateurs s\u00e9lectionn\u00e9s \u2014 lancez et surveillez les tests directement depuis le navigateur.',
+    'features.exec.desc': 'Subprocess ou Docker (Dockerfile ou image personnalis\u00e9s), mises \u00e0 jour WebSocket en direct, planification cron avec relances automatiques et un mode avanc\u00e9 encadr\u00e9 pour variables, arguments robot valid\u00e9s et modificateurs s\u00e9lectionn\u00e9s \u2014 lancez et surveillez les tests directement depuis le navigateur.',
     'features.git.title': 'Projets & gestion Git',
     'features.git.desc': 'Cloner des repos, changer de branche, synchronisation automatique. Explorateur de code int\u00e9gr\u00e9 avec parseur Robot et \u00e9diteur CodeMirror.',
     'features.env.title': 'Gestion des environnements',
     'features.env.desc': 'Cr\u00e9ez des environnements Python avec uv, r\u00e9utilisez le Python de RoboScope ou importez un venv existant. Installez des paquets, d\u00e9finissez des variables, v\u00e9rifiez les biblioth\u00e8ques.',
     'features.reports.title': 'Rapports & analyse approfondie',
-    'features.reports.desc': 'Analyse automatique d\u2019output.xml, export CSV/JSON. D\u00e9tectez les tendances, trouvez les tests instables, 15 KPIs dans 5 cat\u00e9gories.',
+    'features.reports.desc': 'Analyse automatique d\u2019output.xml, export CSV/JSON/JUnit. D\u00e9tectez les tendances, trouvez les tests instables, 15 KPIs dans 5 cat\u00e9gories.',
     'features.ai.title': 'Analyse IA des \u00e9checs',
     'features.ai.desc': 'Analyse des causes profondes par LLM et g\u00e9n\u00e9ration .roboscope \u2192 .robot. OpenAI, Anthropic, OpenRouter ou Ollama.',
     'features.rbac.title': 'R\u00f4les & contr\u00f4le d\u2019acc\u00e8s',
@@ -1393,13 +1393,13 @@ const T = {
     'features.title': 'Todo lo que necesitas',
     'features.subtitle': 'Gesti\u00f3n de pruebas Robot Framework en una interfaz web moderna',
     'features.exec.title': 'Ejecuci\u00f3n de pruebas',
-    'features.exec.desc': 'Subprocess o Docker, actualizaciones WebSocket en vivo, programaci\u00f3n cron y un modo avanzado controlado para variables, argumentos robot validados y modificadores curados \u2014 inicia y supervisa pruebas directamente desde el navegador.',
+    'features.exec.desc': 'Subprocess o Docker (Dockerfile o imagen propios), actualizaciones WebSocket en vivo, programaci\u00f3n cron con reintentos autom\u00e1ticos y un modo avanzado controlado para variables, argumentos robot validados y modificadores curados \u2014 inicia y supervisa pruebas directamente desde el navegador.',
     'features.git.title': 'Proyectos y gesti\u00f3n Git',
     'features.git.desc': 'Clona repos, cambia ramas, sincronizaci\u00f3n autom\u00e1tica. Explorador de c\u00f3digo integrado con parser Robot y editor CodeMirror.',
     'features.env.title': 'Gesti\u00f3n de entornos',
     'features.env.desc': 'Crea entornos Python con uv, reutiliza el Python de RoboScope o importa un venv existente. Instala paquetes, define variables, verifica bibliotecas.',
     'features.reports.title': 'Informes y an\u00e1lisis profundo',
-    'features.reports.desc': 'Parseo autom\u00e1tico de output.xml, exportaci\u00f3n CSV/JSON. Detecta tendencias, encuentra pruebas inestables, 15 KPIs en 5 categor\u00edas.',
+    'features.reports.desc': 'Parseo autom\u00e1tico de output.xml, exportaci\u00f3n CSV/JSON/JUnit. Detecta tendencias, encuentra pruebas inestables, 15 KPIs en 5 categor\u00edas.',
     'features.ai.title': 'An\u00e1lisis IA de fallos',
     'features.ai.desc': 'An\u00e1lisis de causa ra\u00edz con LLM y generaci\u00f3n .roboscope \u2192 .robot. OpenAI, Anthropic, OpenRouter u Ollama.',
     'features.rbac.title': 'Roles y control de acceso',
