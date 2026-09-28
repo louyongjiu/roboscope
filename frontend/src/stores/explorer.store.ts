@@ -232,6 +232,6 @@ export const useExplorerStore = defineStore('explorer', () => {
     keywords, keywordsLoading, keywordsLoaded, keywordsRepoId, projectKeywords,
     fetchTree, openFile, searchInRepo, fetchTestCases, clearSelection, clearAll,
     saveFile, createFile, deleteFileAction, renameFileAction, openInEditorAction, openInFileBrowserAction,
-    preloadKeywords, refreshKeywords, setProjectKeywords,
+    preloadKeywords, refreshKeywords, setProjectKeywords, resolveEnvironmentId,
   }
 })

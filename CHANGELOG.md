@@ -14,6 +14,12 @@
   container runs `python -m robot`) plus your test libraries. Both actions need
   the Docker-build permission and are unavailable when package management is
   disabled.
+- **Flow Editor checks `%{ENV}` references**: each `%{NAME}` in the "Environment
+  variables used" chips and on the node's `%{}` badge is compared against the
+  variable names of the repository's environment (its own, else the default).
+  Names the environment does not define are marked orange with a tooltip; refs
+  with an inline default stay neutral. It is a warning only, since the server's
+  own environment may still provide the variable. Only names are read, never values.
 
 ## [0.14.0] - 2026-09-24
 

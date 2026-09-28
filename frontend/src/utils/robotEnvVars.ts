@@ -40,3 +40,21 @@ export function collectEnvVarRefs(texts: string[]): EnvVarRef[] {
   }
   return [...byName.values()]
 }
+
+export type EnvRefState = 'defined' | 'default' | 'missing' | 'unknown'
+
+/** Story V15.2 — classify refs against the environment's defined variable
+ *  KEYS (never values). `null` keys = nothing resolvable → all `unknown`. */
+// ponytail: exact-case compare; relax if Windows-hosted teams report false warnings
+export function classifyEnvRefs(
+  refs: EnvVarRef[],
+  definedKeys: Set<string> | null,
+): { ref: EnvVarRef; state: EnvRefState }[] {
+  return refs.map((ref) => ({
+    ref,
+    state: definedKeys === null ? 'unknown'
+      : definedKeys.has(ref.name) ? 'defined'
+      : ref.default !== null ? 'default'
+      : 'missing',
+  }))
+}

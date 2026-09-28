@@ -1858,6 +1858,9 @@ Login Works
   wie im Docker-Container. In einer Suite lesen Sie sie als <code>%{BASE_URL}</code>, z.\u202FB.
   <code>Should Be Equal    %{BASE_URL}    https://staging</code>. Hat eine Run-Variable
   (<code>ROBOT_&lt;Name&gt;</code> in Docker) denselben Namen, gewinnt die Run-Variable.
+  Der Flow-Editor prüft jedes <code>%{NAME}</code> gegen die Umgebung des Repositorys (seine
+  eigene, sonst die Standard-Umgebung) und markiert nicht definierte Namen orange — nur eine
+  Warnung, denn die Server-Umgebung kann sie dennoch bereitstellen.
 </p>
 <p>
   Markieren Sie eine Variable als <strong>Geheim</strong>, um sie verschl\u00FCsselt zu speichern.

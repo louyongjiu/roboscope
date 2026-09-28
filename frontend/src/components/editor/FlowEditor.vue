@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, onMounted, onUnmounted, computed, nextTick } from 'vue'
+import { ref, watch, onMounted, onUnmounted, computed, nextTick, provide } from 'vue'
 import type { Ref } from 'vue'
 import { VueFlow, useVueFlow, Handle as VueFlowHandle, Position as HandlePosition } from '@vue-flow/core'
 import { Background } from '@vue-flow/background'
@@ -25,7 +25,9 @@ import BaseButton from '@/components/ui/BaseButton.vue'
 import { useAuthStore } from '@/stores/auth.store'
 import { useDebugStore } from '@/stores/debug.store'
 import { extractErrorDetail } from '@/utils/errors'
-import { collectEnvVarRefs } from '@/utils/robotEnvVars'
+import { collectEnvVarRefs, classifyEnvRefs } from '@/utils/robotEnvVars'
+import { useExplorerStore } from '@/stores/explorer.store'
+import { useEnvironmentsStore } from '@/stores/environments.store'
 import { type RecordedFlow, type SelectorCandidate, type SelectorStrategy } from '@/types/recorder.types'
 import { useKeywordSignatures } from '@/composables/useKeywordSignatures'
 import { useToast } from '@/composables/useToast'
@@ -422,6 +424,32 @@ const activeEnvVarRefs = computed(() => {
   }
   return collectEnvVarRefs(texts)
 })
+
+// Story V15.2 — compare %{ENV} refs against the repo's environment KEYS
+// (never values). Display-only: keys reach KeywordNode via provide/inject,
+// never through props.form / node data (deep-watcher reset trap).
+const explorerStore = useExplorerStore()
+const envStore = useEnvironmentsStore()
+const checkedEnvId = computed(() =>
+  props.repoId === undefined ? null : explorerStore.resolveEnvironmentId(props.repoId))
+const checkedEnvName = computed(() =>
+  envStore.environments.find((e) => e.id === checkedEnvId.value)?.name ?? '')
+const envVarKeys = computed<Set<string> | null>(() => {
+  const vars = checkedEnvId.value === null ? undefined : envStore.variables[checkedEnvId.value]
+  return vars ? new Set(vars.map((v) => v.key)) : null
+})
+watch([() => props.repoId, checkedEnvId], ([, envId]) => {
+  if (envId !== null) envStore.fetchVariables(envId).catch(() => {})
+}, { immediate: true })
+provide('envVarKeys', envVarKeys)
+const classifiedEnvVarRefs = computed(() => classifyEnvRefs(activeEnvVarRefs.value, envVarKeys.value))
+function envRefTitle(name: string, state: string): string | undefined {
+  const env = checkedEnvName.value
+  if (state === 'defined') return t('flowEditor.envVarDefined', { env })
+  if (state === 'default') return t('flowEditor.envVarDefaultUsed', { env })
+  if (state === 'missing') return t('flowEditor.envVarMissing', { env, name })
+  return undefined
+}
 
 // --- Suite-level settings (Suite Setup/Teardown, Force/Default Tags, Doc) ---
 //
@@ -2370,11 +2398,17 @@ function onDebugOverlayClose(): void {
         class="flow-vars__envrefs"
         data-testid="flow-env-vars"
       >
-        <span class="flow-vars__envrefs-title">{{ t('flowEditor.envVarsUsed') }}</span>
         <span
-          v-for="ref in activeEnvVarRefs"
+          class="flow-vars__envrefs-title"
+          :title="envVarKeys ? t('flowEditor.envVarCheckedAgainst', { env: checkedEnvName }) : undefined"
+        >{{ t('flowEditor.envVarsUsed') }}</span>
+        <span
+          v-for="{ ref, state } in classifiedEnvVarRefs"
           :key="ref.name"
           class="flow-libraries__chip"
+          :class="{ 'flow-vars__envref--missing': state === 'missing' }"
+          :data-state="state"
+          :title="envRefTitle(ref.name, state)"
           data-testid="flow-env-var"
         >
           <span class="flow-libraries__chip-name">%{{ '{' }}{{ ref.name }}{{ ref.default !== null ? '=' + ref.default : '' }}{{ '}' }}</span>
@@ -3412,6 +3446,10 @@ function onDebugOverlayClose(): void {
   margin-top: 8px;
   padding-top: 8px;
   border-top: 1px dashed var(--color-border, #e2e8f0);
+}
+.flow-vars__envref--missing {
+  border-color: var(--color-accent, #D4883E);
+  color: var(--color-accent, #D4883E);
 }
 .flow-vars__envrefs-title {
   font-size: 11px;

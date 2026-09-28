@@ -1888,6 +1888,9 @@ Login Works
   suite via <code>%{BASE_URL}</code>, p. ex. <code>Should Be Equal    %{BASE_URL}    https://staging</code>.
   Si une variable d\u2019ex\u00E9cution (<code>ROBOT_&lt;nom&gt;</code> dans Docker) porte le m\u00EAme nom,
   la variable d\u2019ex\u00E9cution l\u2019emporte.
+  L\u2019\u00E9diteur de flux v\u00E9rifie chaque <code>%{NAME}</code> par rapport \u00E0 l\u2019environnement du
+  d\u00E9p\u00F4t (le sien, sinon celui par d\u00E9faut) et marque en orange les noms non d\u00E9finis \u2014 un simple
+  avertissement, car l\u2019environnement du serveur peut encore les fournir.
 </p>
 <p>
   Cochez <strong>Secret</strong> pour chiffrer une variable au repos. Les valeurs secr\u00E8tes ne sont

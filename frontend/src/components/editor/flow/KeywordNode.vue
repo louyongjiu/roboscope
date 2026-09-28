@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed, ref, onBeforeUnmount } from 'vue'
+import { computed, ref, onBeforeUnmount, inject } from 'vue'
+import type { Ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Handle, Position } from '@vue-flow/core'
 import { activeSelector } from '@/types/recorder.types'
@@ -7,6 +8,7 @@ import { qualityBand } from '@/utils/selectorQuality'
 import { getArgLabel, friendlyType } from '@/utils/robotKeywordSignatures'
 import { DRAG_ARM_DELAY_MS } from './reorderDrag'
 import type { FlowNodeData } from './flowConverter'
+import { classifyEnvRefs } from '@/utils/robotEnvVars'
 
 const props = defineProps<{
   data: FlowNodeData
@@ -22,6 +24,17 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
+
+// Story V15.2 — env keys provided by FlowEditor (display-only, no node data).
+const envVarKeys = inject<Ref<Set<string> | null> | null>('envVarKeys', null)
+const missingEnvNames = computed(() => new Set(
+  classifyEnvRefs(props.data.envRefs ?? [], envVarKeys?.value ?? null)
+    .filter((c) => c.state === 'missing').map((c) => c.ref.name),
+))
+const envBadgeTitle = computed(() => (props.data.envRefs ?? []).map((r) =>
+  (r.default !== null ? `%{${r.name}=${r.default}}` : `%{${r.name}}`)
+  + (missingEnvNames.value.has(r.name) ? ` ${t('flowEditor.envVarNotDefined')}` : ''),
+).join('\n'))
 
 // Drag-arm gating: HTML5 native drag fires the moment the user
 // nudges the mouse a few pixels with the button down. That meant a
@@ -140,8 +153,9 @@ const candidateTooltip = computed(() =>
       <span
         v-if="data.envRefs && data.envRefs.length"
         class="flow-node-env-badge"
+        :class="{ 'flow-node-env-badge--missing': missingEnvNames.size > 0 }"
         data-testid="env-badge"
-        :title="data.envRefs.map((r) => r.default !== null ? `%{${r.name}=${r.default}}` : `%{${r.name}}`).join('\n')"
+        :title="envBadgeTitle"
       >%{}</span>
     </div>
     <div v-if="data.step.args.length" class="flow-node-args">
@@ -246,6 +260,9 @@ const candidateTooltip = computed(() =>
   font-family: var(--font-mono, monospace);
   line-height: 16px;
   cursor: help;
+}
+.flow-node-env-badge--missing {
+  background: var(--color-accent, #D4883E);
 }
 .flow-drag-handle {
   cursor: grab;
