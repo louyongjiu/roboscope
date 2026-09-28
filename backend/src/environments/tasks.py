@@ -764,7 +764,9 @@ def build_docker_image(env_id: int) -> dict:
 
             # Pre-build info
             log_lines: list[str] = []
-            has_browser = any(
+            # A saved Dockerfile decides its own base image — only the
+            # generated one follows the package list.
+            has_browser = not env.dockerfile_override and any(
                 _is_browser_package(s.split("==")[0]) for s in pkg_specs
             )
             _check_docker_disk_space(client, env_id, log_lines, has_browser=has_browser)
