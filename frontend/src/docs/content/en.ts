@@ -1945,6 +1945,9 @@ Login Works
   variables &mdash; for local runs and inside Docker containers. Read them in a suite as
   <code>%{BASE_URL}</code>, e.g. <code>Should Be Equal    %{BASE_URL}    https://staging</code>.
   If a run variable (<code>ROBOT_&lt;name&gt;</code> in Docker) has the same name, the run variable wins.
+  The Flow Editor checks each <code>%{NAME}</code> against the repository's environment (its own,
+  else the default) and marks names it does not define in orange &mdash; a warning only, since the
+  server's own environment may still provide them.
 </p>
 <p>
   Mark a variable as <strong>Secret</strong> to encrypt it at rest. Secret values are never

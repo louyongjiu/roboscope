@@ -1923,6 +1923,9 @@ Login Works
   <code>%{BASE_URL}</code>, p. ej. <code>Should Be Equal    %{BASE_URL}    https://staging</code>.
   Si una variable de ejecuci\u00F3n (<code>ROBOT_&lt;nombre&gt;</code> en Docker) tiene el mismo
   nombre, gana la variable de ejecuci\u00F3n.
+  El editor de flujo comprueba cada <code>%{NAME}</code> con el entorno del repositorio (el suyo o,
+  si no, el predeterminado) y marca en naranja los nombres no definidos: solo es un aviso, ya que
+  el entorno del propio servidor a\u00FAn puede proporcionarlos.
 </p>
 <p>
   Marque una variable como <strong>Secreto</strong> para cifrarla en reposo. Los valores secretos

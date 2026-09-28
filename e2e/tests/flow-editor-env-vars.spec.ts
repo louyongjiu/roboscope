@@ -90,3 +90,68 @@ test.describe('Flow Editor — %{ENV} awareness', () => {
     await expect(envSection.getByTestId('flow-env-var')).toContainText('%{HOME=/tmp}');
   });
 });
+
+// Story V15.2 — refs are checked against the repo's environment KEYS.
+const CHECK_ROBOT = `*** Test Cases ***
+Uses Env
+    Log    %{BASE_URL}
+    Log    %{MISSING_VAR}
+
+Second Test
+    Log    trivial second case
+`;
+
+test.describe('Flow Editor — %{ENV} definition check (V15.2)', () => {
+  let token: string;
+  let repoId: number;
+  let envId: number;
+
+  test.beforeAll(async ({ browser }) => {
+    const ctx = await browser.newPage();
+    token = await getAuthToken(ctx);
+    const auth = { Authorization: `Bearer ${token}` };
+    const envRes = await ctx.request.post(`${API}/environments`, {
+      headers: auth, data: { name: `env-check-${Date.now()}`, python_version: '3.12' },
+    });
+    envId = (await envRes.json()).id;
+    const varRes = await ctx.request.post(`${API}/environments/${envId}/variables`, {
+      headers: auth, data: { key: 'BASE_URL', value: 'https://staging', is_secret: false },
+    });
+    expect(varRes.status()).toBe(201);
+    const repoRes = await ctx.request.post(`${API}/repos`, {
+      headers: auth,
+      data: {
+        name: `flow-env-check-${Date.now()}`,
+        repo_type: 'local',
+        local_path: `/tmp/roboscope-flow-env-check-${Date.now()}`,
+        environment_id: envId,
+      },
+    });
+    repoId = (await repoRes.json()).id;
+    await ctx.request.post(`${API}/explorer/${repoId}/file`, {
+      headers: auth, data: { path: 'tests/env.robot', content: CHECK_ROBOT },
+    });
+    await ctx.close();
+  });
+
+  test.afterAll(async ({ browser }) => {
+    const ctx = await browser.newPage();
+    const auth = { Authorization: `Bearer ${await getAuthToken(ctx)}` };
+    await ctx.request.delete(`${API}/repos/${repoId}`, { headers: auth });
+    await ctx.request.delete(`${API}/environments/${envId}`, { headers: auth });
+    await ctx.close();
+  });
+
+  test.beforeEach(async ({ page }) => {
+    await loginAndGoToDashboard(page);
+  });
+
+  test('flags the undefined ref, not the defined one', async ({ page }) => {
+    await openFlow(page, repoId);
+    await page.getByTestId('flow-variables-toggle').click();
+    const chips = page.getByTestId('flow-env-vars').getByTestId('flow-env-var');
+    await expect(chips.filter({ hasText: 'MISSING_VAR' })).toHaveAttribute('data-state', 'missing');
+    await expect(chips.filter({ hasText: 'BASE_URL' })).toHaveAttribute('data-state', 'defined');
+    await expect(page.locator('.flow-node-env-badge--missing')).toHaveCount(1);
+  });
+});

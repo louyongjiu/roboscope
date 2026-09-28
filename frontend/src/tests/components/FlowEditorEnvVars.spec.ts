@@ -2,7 +2,7 @@
  * Story FE-ENV — %{ENV} environment-variable awareness.
  */
 import { describe, it, expect } from 'vitest'
-import { extractEnvVarRefs, collectEnvVarRefs } from '@/utils/robotEnvVars'
+import { extractEnvVarRefs, collectEnvVarRefs, classifyEnvRefs } from '@/utils/robotEnvVars'
 import { parseRobotText, serializeRobotForm } from '@/components/editor/robotTextIO'
 import { robotFormToFlow, type RobotForm } from '@/components/editor/flow/flowConverter'
 
@@ -61,5 +61,26 @@ describe('FE-ENV — %{} survives round-trip (AC4)', () => {
     const out = serializeRobotForm(parseRobotText(src))
     expect(out).toContain('%{HOME}')
     expect(out).toContain('%{PORT=8080}')
+  })
+})
+
+describe('classifyEnvRefs (V15.2)', () => {
+  const refs = [
+    { name: 'BASE_URL', default: null },
+    { name: 'HOME', default: '/tmp' },
+    { name: 'MISSING_VAR', default: null },
+  ]
+  it('classifies defined / default / missing', () => {
+    const out = classifyEnvRefs(refs, new Set(['BASE_URL']))
+    expect(out.map((c) => c.state)).toEqual(['defined', 'default', 'missing'])
+  })
+  it('null keys → unknown for all', () => {
+    expect(classifyEnvRefs(refs, null).every((c) => c.state === 'unknown')).toBe(true)
+  })
+  it('compares case-sensitively', () => {
+    expect(classifyEnvRefs([{ name: 'Base_Url', default: null }], new Set(['BASE_URL']))[0].state).toBe('missing')
+  })
+  it('empty ref list', () => {
+    expect(classifyEnvRefs([], new Set())).toEqual([])
   })
 })

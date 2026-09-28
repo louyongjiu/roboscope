@@ -1,6 +1,6 @@
 # Story V15.2: `%{ENV}` definition check in the Flow Editor
 
-Status: ready-for-dev
+Status: review
 
 Epic: V15 — Follow-through on 0.14 (`_bmad-output/planning-artifacts/v015-epics.md`)
 Story Key: `v15-2-flow-editor-env-var-definition-check`
@@ -41,17 +41,17 @@ This story only adds the comparison against the environment's defined variable *
 
 ## Tasks / Subtasks
 
-- [ ] `utils/robotEnvVars.ts`: `classifyEnvRefs` (AC1)
-- [ ] `stores/explorer.store.ts`: add `resolveEnvironmentId` to the returned object (AC6)
-- [ ] `FlowEditor.vue` (AC2, AC4, AC5, AC6)
-  - [ ] `envVarKeys` computed from `envStore.variables[envId]` → `new Set(vars.map(v => v.key))`, with `null` when there is no env or on error
-  - [ ] `watch(() => props.repoId, …, { immediate: true })` → `fetchVariables(envId).catch(() => {})`
-  - [ ] `provide('envVarKeys', envVarKeys)`; chips iterate `classifyEnvRefs(activeEnvVarRefs, envVarKeys)` with state class + tooltip
-  - [ ] `envName` for the tooltip from `envStore.environments`
-- [ ] `KeywordNode.vue`: `inject('envVarKeys', null)`, a computed `hasMissing`, and a `flow-node-env-badge--missing` class (AC3)
-- [ ] i18n `flowEditor.envVarDefined`, `envVarDefaultUsed`, `envVarMissing`, `envVarCheckedAgainst` in EN/DE/FR/ES with `{env}` / `{name}` params.
+- [x] `utils/robotEnvVars.ts`: `classifyEnvRefs` (AC1)
+- [x] `stores/explorer.store.ts`: add `resolveEnvironmentId` to the returned object (AC6)
+- [x] `FlowEditor.vue` (AC2, AC4, AC5, AC6)
+  - [x] `envVarKeys` computed from `envStore.variables[envId]` → `new Set(vars.map(v => v.key))`, with `null` when there is no env or on error
+  - [x] `watch(() => props.repoId, …, { immediate: true })` → `fetchVariables(envId).catch(() => {})`
+  - [x] `provide('envVarKeys', envVarKeys)`; chips iterate `classifyEnvRefs(activeEnvVarRefs, envVarKeys)` with state class + tooltip
+  - [x] `envName` for the tooltip from `envStore.environments`
+- [x] `KeywordNode.vue`: `inject('envVarKeys', null)`, a computed `hasMissing`, and a `flow-node-env-badge--missing` class (AC3)
+- [x] i18n `flowEditor.envVarDefined`, `envVarDefaultUsed`, `envVarMissing`, `envVarCheckedAgainst` in EN/DE/FR/ES with `{env}` / `{name}` params.
       Any literal `%{…}` in strings must escape braces (`%{'{'}NAME{'}'}`). Prod build check.
-- [ ] Docs: one sentence in the `env-variables` section in all 4 doc locales.
+- [x] Docs: one sentence in the `env-variables` section in all 4 doc locales.
 
 ## Dev Notes
 
@@ -90,8 +90,35 @@ This story only adds the comparison against the environment's defined variable *
 
 ### Agent Model Used
 
+Claude Opus 5.5
+
 ### Debug Log References
+
+- `vue-tsc --noEmit` clean; `vitest run` 82 files / 930 tests passed; `vite build` OK (prod i18n parse).
+- e2e spec written, not run (per instructions).
 
 ### Completion Notes List
 
+- `classifyEnvRefs` added next to the FE-ENV helpers; exact-case compare marked with a `ponytail:` comment.
+- FlowEditor watches `[repoId, resolvedEnvId]` (not only `repoId`), so the fetch also fires when the repos/envs
+  stores finish loading after the editor mounts. Fetch errors are swallowed → keys stay `null` → `unknown` (AC4).
+- Keys reach `KeywordNode` only through `provide('envVarKeys')`; `props.form` and node data are untouched (AC5).
+- The unknown state keeps the old look; chips carry `data-state` for all states (incl. `unknown`).
+- Deviation: one extra i18n key `flowEditor.envVarNotDefined` for the node-badge "(not defined)" suffix (AC3).
+  ZH falls back to EN (no hand entry). No literal `%{…}` in the new strings, so no brace escaping needed.
+- `envVarCheckedAgainst` is the tooltip of the chips' title label (only when keys are loaded).
+- e2e: new describe in `flow-editor-env-vars.spec.ts` creates an env with `BASE_URL`, a repo bound to it, and a
+  2-test-case suite; asserts `MISSING_VAR` chip `data-state="missing"`, `BASE_URL` `defined`, one warning badge.
+
 ### File List
+
+- frontend/src/utils/robotEnvVars.ts
+- frontend/src/stores/explorer.store.ts
+- frontend/src/components/editor/FlowEditor.vue
+- frontend/src/components/editor/flow/KeywordNode.vue
+- frontend/src/i18n/locales/{en,de,fr,es}.ts
+- frontend/src/docs/content/{en,de,fr,es}.ts
+- frontend/src/tests/components/FlowEditorEnvVars.spec.ts
+- frontend/src/tests/components/KeywordNodeEnvBadge.spec.ts (new)
+- e2e/tests/flow-editor-env-vars.spec.ts
+- CHANGELOG.md
