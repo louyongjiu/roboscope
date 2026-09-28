@@ -266,12 +266,11 @@ test.describe('Debug prereq dialog — install + retry path', () => {
     await Promise.race([
       expect(page.getByTestId('debug-panel')).toBeVisible({ timeout: 10_000 }),
       expect(page.getByTestId('debug-prereq-dialog')).toHaveCount(0, { timeout: 10_000 }),
-    ]).catch(() => {
-      // At minimum, the debug POST was called twice — prerequisite + retry.
-      expect(debugCallCount).toBeGreaterThan(1);
-    });
+    ]).catch(() => { /* fall through to the call-count check below */ });
 
-    expect(debugCallCount).toBeGreaterThan(1);
+    // The dialog can close before the retry POST is sent, so poll instead of
+    // asserting immediately: prerequisite call + retry = at least two calls.
+    await expect.poll(() => debugCallCount, { timeout: 10_000 }).toBeGreaterThan(1);
   });
 });
 
