@@ -14,6 +14,14 @@
   container runs `python -m robot`) plus your test libraries. Both actions need
   the Docker-build permission and are unavailable when package management is
   disabled.
+- **JUnit/xUnit report export**: "Export JUnit" next to "Export CSV"/"Export JSON"
+  (report detail and run panel) downloads `report_<id>_xunit.xml`, Robot
+  Framework's own xUnit output converted with `rebot`, for Jenkins, GitLab and
+  Azure DevOps test dashboards. Also available as
+  `GET /api/v1/reports/{id}/export?format=junit`. Works for uploaded reports and
+  Docker runs; returns 404 when `output.xml` is gone (retention) and 422 when it
+  cannot be converted. Runs still never emit `--xunit`, and advanced run args
+  still reject it.
 
 ## [0.14.0] - 2026-09-24
 

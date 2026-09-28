@@ -83,3 +83,82 @@ def test_csv_safe_tab_cr_and_non_strings():
     assert _csv_safe("ok") == "ok"
     assert _csv_safe(-1.5) == -1.5
     assert _csv_safe(None) is None
+
+
+# --- V15.1: JUnit/xUnit export via rebot ---------------------------------
+
+import subprocess  # noqa: E402
+import sys  # noqa: E402
+import xml.etree.ElementTree as ET  # noqa: E402
+from unittest.mock import patch  # noqa: E402
+
+import pytest  # noqa: E402
+
+_SUITE = """*** Test Cases ***
+Passes
+    Log    ok
+
+Fails
+    Fail    boom
+"""
+
+
+@pytest.fixture
+def junit_report(tmp_path, db_session, admin_user):
+    suite = tmp_path / "demo.robot"
+    suite.write_text(_SUITE)
+    out = tmp_path / "output.xml"
+    subprocess.run(
+        [sys.executable, "-m", "robot", "--output", str(out), "--log", "NONE",
+         "--report", "NONE", str(suite)],
+        capture_output=True, check=False, timeout=120,
+    )
+    assert out.is_file()
+    return _setup_report(db_session, admin_user, output_xml_path=str(out))
+
+
+def _junit(client, report_id, user):
+    return client.get(
+        f"/api/v1/reports/{report_id}/export?format=junit", headers=auth_header(user)
+    )
+
+
+def test_junit_export(client, junit_report, admin_user):
+    r = _junit(client, junit_report.id, admin_user)
+    assert r.status_code == 200, r.text
+    assert r.headers["content-type"].startswith("application/xml")
+    assert (
+        f'filename="report_{junit_report.id}_xunit.xml"' in r.headers["content-disposition"]
+    )
+    root = ET.fromstring(r.content)
+    assert root.tag == "testsuite"
+    assert root.get("tests") == "2"
+    assert root.get("failures") == "1"
+
+
+def test_junit_missing_file_404(client, junit_report, admin_user, tmp_path):
+    (tmp_path / "output.xml").unlink()
+    r = _junit(client, junit_report.id, admin_user)
+    assert r.status_code == 404
+    assert r.json()["detail"] == "output.xml not found"
+
+
+def test_junit_corrupt_output_422(client, junit_report, admin_user, tmp_path):
+    (tmp_path / "output.xml").write_text("not xml at all")
+    r = _junit(client, junit_report.id, admin_user)
+    assert r.status_code == 422
+    assert r.json()["detail"]
+
+
+def test_junit_timeout_422(client, junit_report, admin_user):
+    with patch(
+        "src.reports.service.subprocess.run",
+        side_effect=subprocess.TimeoutExpired(cmd="rebot", timeout=120),
+    ):
+        r = _junit(client, junit_report.id, admin_user)
+    assert r.status_code == 422
+    assert r.json()["detail"] == "conversion timed out"
+
+
+def test_junit_missing_report_404(client, admin_user):
+    assert _junit(client, 99999, admin_user).status_code == 404

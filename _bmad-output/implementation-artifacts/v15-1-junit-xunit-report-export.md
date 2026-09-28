@@ -1,6 +1,6 @@
 # Story V15.1: JUnit/xUnit export of a report
 
-Status: ready-for-dev
+Status: review
 
 Epic: V15 — Follow-through on 0.14 (`_bmad-output/planning-artifacts/v015-epics.md`)
 Story Key: `v15-1-junit-xunit-report-export`
@@ -31,16 +31,16 @@ so that Jenkins, GitLab or Azure DevOps show RoboScope results in their own test
 
 ## Tasks / Subtasks
 
-- [ ] Backend (AC1, AC2, AC4)
-  - [ ] `reports/service.py::render_xunit(output_xml_path: str) -> bytes`. It raises `FileNotFoundError` when the path is missing and `ValueError(msg)` on rc≠0 or timeout.
-  - [ ] `reports/router.py::export_report_results`: `format: Literal["csv", "json", "junit"]`, and a junit branch that maps the exceptions to 404/422.
-- [ ] Regression pin (AC3): add a `--xunit`/`-x` rejection case to `tests/execution/test_resolver_advanced.py` (skip it if one already exists; grep first).
-- [ ] Frontend (AC6)
-  - [ ] `api/reports.api.ts::exportReportResults`: widen the format union to include `'junit'`.
-  - [ ] Both views: add a third button. The filename is `report_${id}_xunit.xml` for junit (the current code interpolates `.${format}`, so special-case it).
-  - [ ] i18n `reportDetail.exportJunit`, `reportDetail.exportJunitFailed` in EN/DE/FR/ES (check both `reportDetail` blocks: `en.ts:656` and `:1069`, and use the one the views read).
-- [ ] Docs: one sentence in the reports section of `frontend/src/docs/content/{en,de,fr,es}.ts`.
-- [ ] Tests (see Testing).
+- [x] Backend (AC1, AC2, AC4)
+  - [x] `reports/service.py::render_xunit(output_xml_path: str) -> bytes`. It raises `FileNotFoundError` when the path is missing and `ValueError(msg)` on rc≠0 or timeout.
+  - [x] `reports/router.py::export_report_results`: `format: Literal["csv", "json", "junit"]`, and a junit branch that maps the exceptions to 404/422.
+- [x] Regression pin (AC3): add a `--xunit`/`-x` rejection case to `tests/execution/test_resolver_advanced.py` (skip it if one already exists; grep first).
+- [x] Frontend (AC6)
+  - [x] `api/reports.api.ts::exportReportResults`: widen the format union to include `'junit'`.
+  - [x] Both views: add a third button. The filename is `report_${id}_xunit.xml` for junit (the current code interpolates `.${format}`, so special-case it).
+  - [x] i18n `reportDetail.exportJunit`, `reportDetail.exportJunitFailed` in EN/DE/FR/ES (check both `reportDetail` blocks: `en.ts:656` and `:1069`, and use the one the views read).
+- [x] Docs: one sentence in the reports section of `frontend/src/docs/content/{en,de,fr,es}.ts`.
+- [x] Tests (see Testing).
 
 ## Dev Notes
 
@@ -83,8 +83,40 @@ so that Jenkins, GitLab or Azure DevOps show RoboScope results in their own test
 
 ### Agent Model Used
 
+Claude Opus 5.5 (claude-opus-5-5)
+
 ### Debug Log References
+
+- The e2e upload fixture (`generator="Robot 7.0"`, no `schemaversion`) was converted with the exact rebot argv
+  locally: rc 0, `<testsuite tests="2" failures="1">`, so the e2e assertion holds.
 
 ### Completion Notes List
 
+- `render_xunit` runs the fixed AC2 argv via `subprocess.run` (list, `timeout=120`) in a `TemporaryDirectory`.
+  Missing path/file raises `FileNotFoundError` (404 "output.xml not found"); rc!=0, missing xunit file or timeout
+  raises `ValueError` (422 with `stderr[:500]` or "conversion timed out"). `resolver.py` untouched.
+- AC3 pin: `--xunit` and `-x` added to the rejection parametrize (none existed), plus
+  `test_build_robot_argv_never_emits_xunit`.
+- Frontend: `ReportExportFormat` union + `reportExportFilename()` in `reports.api.ts`, shared by both views.
+  `exportReportResults` unwraps a Blob error body into JSON so `extractErrorDetail` gets the server `detail`
+  (with `responseType: 'blob'` the error body is a Blob too). Export failures for all three formats now toast.
+- **Deviation:** the failure toast key is `reportDetail.exportFailed` ("Export failed"), not `exportJunitFailed`,
+  because the same handler covers CSV/JSON failures too. ZH falls back to EN.
+- Docs: one sentence appended to the existing export paragraph in EN/DE/FR/ES (no new section ids).
+- Tests: backend full suite 2481 passed (`-n auto`); frontend vitest 925 passed (81 files), vue-tsc clean,
+  vite build OK. e2e spec extended but not run (per instructions).
+
 ### File List
+
+- backend/src/reports/service.py
+- backend/src/reports/router.py
+- backend/tests/reports/test_export.py
+- backend/tests/execution/test_resolver_advanced.py
+- frontend/src/api/reports.api.ts
+- frontend/src/views/ReportDetailView.vue
+- frontend/src/components/execution/RunDetailPanel.vue
+- frontend/src/i18n/locales/{en,de,fr,es}.ts
+- frontend/src/docs/content/{en,de,fr,es}.ts
+- frontend/src/tests/components/ReportExport.spec.ts
+- e2e/tests/report-export-delete.spec.ts
+- CHANGELOG.md

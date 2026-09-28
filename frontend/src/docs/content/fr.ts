@@ -1297,6 +1297,9 @@ Recording 21
   par test (suite, nom, nom long, statut, dur\u00E9e, tags, d\u00E9but/fin et message d\u2019erreur). Les cellules
   CSV commen\u00E7ant par <code>=</code>, <code>+</code>, <code>-</code> ou <code>@</code> sont pr\u00E9fix\u00E9es
   d\u2019une apostrophe afin que les tableurs ne les ex\u00E9cutent pas comme des formules.
+  <strong>Exporter JUnit</strong> t\u00E9l\u00E9charge <code>report_&lt;id&gt;_xunit.xml</code>, la sortie xUnit
+  de Robot Framework lui-m\u00EAme (convertie avec <code>rebot</code>), que Jenkins, GitLab et Azure DevOps
+  affichent dans leurs tableaux de bord de tests.
 </p>`
       },
       {

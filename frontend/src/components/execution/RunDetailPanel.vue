@@ -7,7 +7,7 @@ import { useAiStore } from '@/stores/ai.store'
 import { useAuthStore } from '@/stores/auth.store'
 import { useDebugStore } from '@/stores/debug.store'
 import { getRunReport } from '@/api/execution.api'
-import { getReportHtmlBlobUrl, getReportZipBlobUrl, exportReportResults } from '@/api/reports.api'
+import { getReportHtmlBlobUrl, getReportZipBlobUrl, exportReportResults, reportExportFilename, type ReportExportFormat } from '@/api/reports.api'
 import { useToast } from '@/composables/useToast'
 import { downloadBlob } from '@/utils/download'
 import { extractErrorDetail } from '@/utils/errors'
@@ -165,9 +165,14 @@ async function downloadZip() {
   URL.revokeObjectURL(blobUrl)
 }
 
-async function exportResults(format: 'csv' | 'json') {
+async function exportResults(format: ReportExportFormat) {
   if (!reportId.value) return
-  downloadBlob(await exportReportResults(reportId.value, format), `report_${reportId.value}_results.${format}`)
+  const id = reportId.value
+  try {
+    downloadBlob(await exportReportResults(id, format), reportExportFilename(id, format))
+  } catch (e) {
+    toast.error(t('reportDetail.exportFailed'), extractErrorDetail(e, t('common.error')))
+  }
 }
 
 const toast = useToast()
@@ -398,6 +403,9 @@ watch(() => props.run.status, (newStatus, oldStatus) => {
         </BaseButton>
         <BaseButton v-if="hasReport" variant="ghost" size="sm" data-testid="export-json" @click="exportResults('json')">
           {{ t('reportDetail.exportJson') }}
+        </BaseButton>
+        <BaseButton v-if="hasReport" variant="ghost" size="sm" data-testid="export-junit" @click="exportResults('junit')">
+          {{ t('reportDetail.exportJunit') }}
         </BaseButton>
         <BaseButton
           v-if="hasReport && auth.hasMinRole('editor')"

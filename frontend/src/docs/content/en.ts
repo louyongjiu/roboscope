@@ -1308,6 +1308,9 @@ Recording 21
   test with suite, test name, long name, status, duration, tags, start/end time and error message.
   CSV cells that start with <code>=</code>, <code>+</code>, <code>-</code> or <code>@</code> are
   prefixed with an apostrophe so spreadsheets do not execute them as formulas.
+  <strong>Export JUnit</strong> downloads <code>report_&lt;id&gt;_xunit.xml</code>, Robot Framework's
+  own xUnit output (converted with <code>rebot</code>), which Jenkins, GitLab and Azure DevOps
+  show in their test dashboards.
 </p>`
       },
       {

@@ -1273,6 +1273,9 @@ Recording 21
   eine Zeile pro Test (Suite, Testname, Langname, Status, Dauer, Tags, Start/Ende und Fehlermeldung).
   CSV-Zellen, die mit <code>=</code>, <code>+</code>, <code>-</code> oder <code>@</code> beginnen,
   erhalten ein vorangestelltes Apostroph, damit Tabellenkalkulationen sie nicht als Formel ausführen.
+  <strong>JUnit exportieren</strong> lädt <code>report_&lt;id&gt;_xunit.xml</code> herunter, die xUnit-Ausgabe
+  von Robot Framework selbst (per <code>rebot</code> konvertiert), die Jenkins, GitLab und Azure DevOps
+  in ihren Test-Dashboards anzeigen.
 </p>`,
         tip: 'Die ZIP-Datei eignet sich ideal zum Archivieren oder Teilen von Ergebnissen mit Teammitgliedern, die keinen RoboScope-Zugang haben.'
       },

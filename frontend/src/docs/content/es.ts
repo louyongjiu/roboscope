@@ -1329,6 +1329,9 @@ Recording 21
   por prueba (suite, nombre, nombre largo, estado, duración, etiquetas, inicio/fin y mensaje de error).
   Las celdas CSV que empiezan por <code>=</code>, <code>+</code>, <code>-</code> o <code>@</code> se
   prefijan con un apóstrofo para que las hojas de cálculo no las ejecuten como fórmulas.
+  <strong>Exportar JUnit</strong> descarga <code>report_&lt;id&gt;_xunit.xml</code>, la salida xUnit propia
+  de Robot Framework (convertida con <code>rebot</code>), que Jenkins, GitLab y Azure DevOps muestran
+  en sus paneles de pruebas.
 </p>`
       },
       {
