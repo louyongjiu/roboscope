@@ -73,6 +73,8 @@ def create_repository(
         local_path=local_path,
         auto_sync=data.auto_sync if data.repo_type == "git" else False,
         sync_interval_minutes=data.sync_interval_minutes,
+        pre_run_sync=data.pre_run_sync if data.repo_type == "git" else False,
+        environment_id=data.environment_id,
         created_by=user_id,
     )
     db.add(repo)
