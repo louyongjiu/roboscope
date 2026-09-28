@@ -276,6 +276,9 @@ test.describe('Git Sync — E2E', () => {
   // ─── Story V14.5: per-file diff preview in the Publish modal ─────
 
   test('publish modal shows the diff of an edited file', async ({ page }) => {
+    // The clone waits behind earlier specs' tasks on the single-worker
+    // executor, so the 15 s default is too tight for the 30 s clone poll.
+    test.setTimeout(60_000);
     // Real git: a local bare remote seeded with one committed file.
     const stamp = Date.now();
     const seed = `/tmp/roboscope-diff-seed-${stamp}`;
