@@ -2,6 +2,19 @@
 
 ## [Unreleased]
 
+### Added
+
+- **Custom Dockerfile and your own container image**: in an environment's Docker
+  section the Dockerfile is now editable. Change the generated one or import your
+  own file, save it, and every following build uses it (no packages required);
+  "Reset to generated" goes back. Alternatively enter an existing image under
+  "Use your own image": it is marked as a custom image, never reported as
+  outdated, and pulled on first use; building a RoboScope image again switches
+  back. The image must provide `python` with `robotframework` installed (the
+  container runs `python -m robot`) plus your test libraries. Both actions need
+  the Docker-build permission and are unavailable when package management is
+  disabled.
+
 ## [0.14.0] - 2026-09-24
 
 ### Added

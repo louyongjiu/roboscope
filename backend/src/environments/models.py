@@ -2,7 +2,7 @@
 
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint
+from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint, false
 from sqlalchemy.orm import Mapped, mapped_column
 
 from src.database import Base, TimestampMixin
@@ -29,7 +29,18 @@ class Environment(Base, TimestampMixin):
     docker_build_status: Mapped[str | None] = mapped_column(String(20), default=None)
     docker_build_error: Mapped[str | None] = mapped_column(Text, default=None)
     docker_build_log: Mapped[str | None] = mapped_column(Text, default=None)
+    # Story V15.5: a user-edited/imported Dockerfile replaces the generated one
+    # for builds; docker_image_custom marks docker_image as user-provided
+    # (never stale, never overwritten except by an explicit RoboScope build).
+    dockerfile_override: Mapped[str | None] = mapped_column(Text, default=None)
+    docker_image_custom: Mapped[bool] = mapped_column(
+        Boolean, default=False, server_default=false()
+    )
     created_by: Mapped[int] = mapped_column(ForeignKey("users.id"))
+
+    @property
+    def dockerfile_customized(self) -> bool:
+        return bool(self.dockerfile_override)
 
 
 class EnvironmentPackage(Base):

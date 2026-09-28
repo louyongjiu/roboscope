@@ -1960,6 +1960,33 @@ Login Works
   despu\u00E9s de la instalaci\u00F3n. Si se necesita inicializaci\u00F3n, aparece un indicador
   <strong>inicializando</strong> en la interfaz, y una verificaci\u00F3n previa asegura que
   la biblioteca est\u00E9 lista antes de la ejecuci\u00F3n.
+</p>
+<h4>Dockerfile personalizado y tu propia imagen</h4>
+<p>
+  Abre <strong>Dockerfile (ver / editar)</strong> en la sección Docker para cambiar el Dockerfile
+  generado, o usa <strong>Importar archivo…</strong> para cargar el tuyo (solo se guarda al pulsar
+  <strong>Guardar Dockerfile</strong>). Un Dockerfile guardado sustituye al generado en todas las
+  construcciones siguientes y se marca con la insignia <strong>Dockerfile personalizado</strong>;
+  <strong>Restablecer el generado</strong> vuelve al Dockerfile basado en paquetes. Con un Dockerfile
+  guardado, la construcción ya no requiere paquetes en el entorno. El archivo debe empezar con una
+  instrucción <code>FROM</code> (solo pueden precederla líneas <code>ARG</code>) y está limitado a 100 KB.
+</p>
+<p>
+  En <strong>Usar tu propia imagen</strong> puedes introducir una referencia de imagen existente
+  (p. ej. <code>registry.example.com/team/rf-image:1.0</code>). Se marca como <strong>Imagen propia</strong>,
+  nunca se considera desactualizada y se descarga en la primera ejecución si no existe localmente.
+  Volver a construir una imagen de RoboScope (o <strong>Volver a la imagen construida por RoboScope</strong>)
+  cambia de nuevo a una imagen gestionada.
+</p>
+<p>
+  <strong>Contrato para imágenes y Dockerfiles propios:</strong> el contenedor se inicia con el comando
+  <code>python -m robot --outputdir /output …</code>, el directorio de trabajo <code>/workspace</code>
+  (tu repositorio, montado en solo lectura) y <code>/output</code> (escribible, para los resultados).
+  Por tanto, la imagen debe proporcionar un <code>python</code> en el <code>PATH</code> con
+  <code>robotframework</code> instalado, además de todas las bibliotecas que importan tus pruebas.
+  No definas un <code>ENTRYPOINT</code> que se trague el comando. Guardar un Dockerfile y elegir una imagen
+  requieren el mismo permiso que una construcción y no están disponibles si la gestión de paquetes está
+  desactivada.
 </p>`
       },
       {

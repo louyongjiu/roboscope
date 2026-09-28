@@ -1894,6 +1894,33 @@ Login Works
   sind. Falls eine Initialisierung n\u00F6tig ist, zeigt die Oberfl\u00E4che den Status
   <strong>Initialisierung</strong> an, und eine Vorab-Pr\u00FCfung stellt sicher, dass die
   Browser-Library vor der Testausf\u00FChrung bereit ist.
+</p>
+<h4>Eigenes Dockerfile &amp; eigenes Image</h4>
+<p>
+  Öffne im Docker-Bereich <strong>Dockerfile (ansehen / bearbeiten)</strong>, um das generierte
+  Dockerfile zu ändern, oder lade mit <strong>Datei importieren…</strong> dein eigenes (gespeichert
+  wird es erst mit <strong>Dockerfile speichern</strong>). Ein gespeichertes Dockerfile ersetzt das
+  generierte bei allen folgenden Builds und wird mit dem Badge <strong>Angepasstes Dockerfile</strong>
+  markiert; <strong>Auf generiertes zurücksetzen</strong> kehrt zum paketbasierten Dockerfile zurück.
+  Mit gespeichertem Dockerfile braucht ein Build keine Pakete in der Umgebung. Die Datei muss mit einer
+  <code>FROM</code>-Anweisung beginnen (davor sind nur <code>ARG</code>-Zeilen erlaubt) und ist auf 100 KB begrenzt.
+</p>
+<p>
+  Unter <strong>Eigenes Image verwenden</strong> kannst du eine bestehende Image-Referenz eintragen
+  (z. B. <code>registry.example.com/team/rf-image:1.0</code>). Sie wird als <strong>Eigenes Image</strong>
+  markiert, gilt nie als veraltet und wird beim ersten Lauf gepullt, falls sie lokal fehlt. Ein erneuter
+  RoboScope-Build (oder <strong>Zurück zum von RoboScope gebauten Image</strong>) schaltet wieder auf ein
+  verwaltetes Image um.
+</p>
+<p>
+  <strong>Vertrag für eigene Images und Dockerfiles:</strong> Der Container wird mit dem Befehl
+  <code>python -m robot --outputdir /output …</code> gestartet, mit dem Arbeitsverzeichnis
+  <code>/workspace</code> (dein Repository, schreibgeschützt eingebunden) und <code>/output</code>
+  (beschreibbar, für die Ergebnisse). Das Image muss daher ein <code>python</code> im <code>PATH</code>
+  mit installiertem <code>robotframework</code> bereitstellen, dazu alle Bibliotheken, die deine Tests
+  importieren. Setze keinen <code>ENTRYPOINT</code>, der den Befehl verschluckt. Dockerfile speichern und
+  Image wählen erfordern dieselbe Berechtigung wie ein Build und sind bei deaktivierter Paketverwaltung
+  nicht verfügbar.
 </p>`
       },
       {

@@ -7,7 +7,7 @@ import { useFeatureFlags } from '@/composables/useFeatureFlags'
 import { useAuthStore } from '@/stores/auth.store'
 import { extractErrorDetail, extractErrorStatus } from '@/utils/errors'
 import * as envsApi from '@/api/environments.api'
-import type { EnvironmentPackage, EnvironmentVariable } from '@/types/domain.types'
+import type { Environment, EnvironmentPackage, EnvironmentVariable } from '@/types/domain.types'
 import { parseBackendDate } from '@/utils/formatDate'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import BaseModal from '@/components/ui/BaseModal.vue'
@@ -296,12 +296,54 @@ async function removePkg(envId: number, packageName: string) {
   }
 }
 
-async function loadDockerfile(envId: number) {
-  if (dockerfilePreview.value[envId]) return
+async function loadDockerfile(envId: number, force = false) {
+  if (!force && dockerfilePreview.value[envId] !== undefined) return
   try {
     dockerfilePreview.value[envId] = await envsApi.getDockerfile(envId)
   } catch {
-    dockerfilePreview.value[envId] = '# Error loading Dockerfile'
+    // 400 = no packages and no saved Dockerfile yet: start from an empty editor.
+    dockerfilePreview.value[envId] = ''
+  }
+}
+
+// Story V15.5 — user-edited/imported Dockerfile + user-provided image.
+const canEditDocker = computed(() => pkgMgmt.value && canEditVars.value)
+const customImageInput = ref<Record<number, string>>({})
+
+function mergeEnv(updated: Partial<Environment> & { id: number }) {
+  const idx = envs.environments.findIndex(e => e.id === updated.id)
+  if (idx !== -1) Object.assign(envs.environments[idx], updated)
+}
+
+async function saveDockerfile(envId: number, content: string | null) {
+  try {
+    mergeEnv(await envsApi.saveDockerfile(envId, content))
+    if (content === null) {
+      await loadDockerfile(envId, true)
+      toast.success(t('environments.docker.dockerfileResetDone'))
+    } else {
+      toast.success(t('environments.docker.dockerfileSaved'))
+    }
+  } catch (e: unknown) {
+    toast.error(t('common.error'), extractErrorDetail(e, t('common.error')))
+  }
+}
+
+async function importDockerfile(envId: number, event: Event) {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  if (!file) return
+  dockerfilePreview.value[envId] = await file.text() // saved only on Save
+  input.value = ''
+}
+
+async function setCustomImage(envId: number, image: string | null) {
+  try {
+    mergeEnv(await envsApi.updateEnvironment(envId, { docker_image: image, docker_image_custom: image !== null }))
+    toast.success(t(image === null ? 'environments.docker.managedImageSet' : 'environments.docker.customImageSet'))
+    if (image !== null) customImageInput.value[envId] = ''
+  } catch (e: unknown) {
+    toast.error(t('common.error'), extractErrorDetail(e, t('common.error')))
   }
 }
 
@@ -503,12 +545,23 @@ function isBrowserConflict(pkg: { name: string; group?: string }): boolean {
           </div>
 
           <!-- Docker Image -->
-          <div v-if="envs.packages[env.id]?.length" class="detail-section">
-            <h4>{{ t('environments.docker.dockerImage') }}</h4>
+          <div class="detail-section" data-testid="env-docker-section">
+            <h4>
+              {{ t('environments.docker.dockerImage') }}
+              <BaseBadge v-if="env.docker_image_custom" variant="info" data-testid="docker-custom-image-badge">{{ t('environments.docker.customImageBadge') }}</BaseBadge>
+              <BaseBadge v-if="env.dockerfile_customized" variant="info" data-testid="docker-custom-dockerfile-badge">{{ t('environments.docker.customDockerfileBadge') }}</BaseBadge>
+            </h4>
             <div v-if="env.docker_image" class="docker-current">
               <span class="text-sm">{{ t('environments.docker.currentImage') }}:</span>
               <code class="docker-tag">{{ env.docker_image }}</code>
-              <span v-if="env.docker_image_built_at" class="text-muted text-sm">
+              <BaseButton
+                v-if="env.docker_image_custom && canEditDocker"
+                variant="ghost"
+                size="sm"
+                data-testid="docker-managed-image"
+                @click="setCustomImage(env.id, null)"
+              >{{ t('environments.docker.backToManaged') }}</BaseButton>
+              <span v-if="env.docker_image_built_at && !env.docker_image_custom" class="text-muted text-sm">
                 {{ t('environments.docker.builtAt', { date: parseBackendDate(env.docker_image_built_at).toLocaleString() }) }}
               </span>
             </div>
@@ -538,9 +591,40 @@ function isBrowserConflict(pkg: { name: string; group?: string }): boolean {
                 <span class="text-muted text-sm">{{ t('environments.docker.maxContainersHint') }}</span>
               </div>
             </div>
-            <details class="docker-preview" @toggle="($event.target as HTMLDetailsElement).open && loadDockerfile(env.id)">
-              <summary class="text-muted text-sm">{{ t('environments.docker.previewDockerfile') }}</summary>
-              <pre v-if="dockerfilePreview[env.id]" class="dockerfile-code">{{ dockerfilePreview[env.id] }}</pre>
+            <form v-if="canEditDocker" class="docker-own-image" data-testid="docker-own-image-form" @submit.prevent="customImageInput[env.id]?.trim() && setCustomImage(env.id, customImageInput[env.id].trim())">
+              <label class="text-sm" :for="`docker-own-image-${env.id}`">{{ t('environments.docker.ownImageLabel') }}</label>
+              <input
+                :id="`docker-own-image-${env.id}`"
+                v-model="customImageInput[env.id]"
+                class="form-input form-input-sm"
+                data-testid="docker-own-image-input"
+                :placeholder="t('environments.docker.ownImagePlaceholder')"
+              />
+              <BaseButton type="submit" size="sm" variant="secondary" :disabled="!customImageInput[env.id]?.trim()">{{ t('environments.docker.ownImageApply') }}</BaseButton>
+              <p class="text-muted text-sm docker-own-image-hint">{{ t('environments.docker.ownImageHint') }}</p>
+            </form>
+            <details class="docker-preview" data-testid="dockerfile-details" @toggle="($event.target as HTMLDetailsElement).open && loadDockerfile(env.id)">
+              <summary class="text-muted text-sm">{{ t('environments.docker.editDockerfile') }}</summary>
+              <template v-if="dockerfilePreview[env.id] !== undefined">
+                <textarea
+                  v-model="dockerfilePreview[env.id]"
+                  class="dockerfile-code dockerfile-editor"
+                  data-testid="dockerfile-editor"
+                  rows="14"
+                  spellcheck="false"
+                  :readonly="!canEditDocker"
+                  :aria-label="t('environments.docker.editDockerfile')"
+                ></textarea>
+                <div v-if="canEditDocker" class="dockerfile-actions">
+                  <BaseButton size="sm" data-testid="dockerfile-save" :disabled="!dockerfilePreview[env.id]?.trim()" @click="saveDockerfile(env.id, dockerfilePreview[env.id])">{{ t('environments.docker.saveDockerfile') }}</BaseButton>
+                  <BaseButton v-if="env.dockerfile_customized" size="sm" variant="secondary" data-testid="dockerfile-reset" @click="saveDockerfile(env.id, null)">{{ t('environments.docker.resetDockerfile') }}</BaseButton>
+                  <label class="dockerfile-import">
+                    {{ t('environments.docker.importDockerfile') }}
+                    <input type="file" accept=".dockerfile,Dockerfile,text/plain,*" data-testid="dockerfile-import" hidden @change="importDockerfile(env.id, $event)" />
+                  </label>
+                  <span class="text-muted text-sm">{{ t('environments.docker.dockerfileHint') }}</span>
+                </div>
+              </template>
               <BaseSpinner v-else />
             </details>
             <!-- Docker build status banners -->
@@ -578,7 +662,7 @@ function isBrowserConflict(pkg: { name: string; group?: string }): boolean {
               </div>
             </details>
 
-            <div v-if="pkgMgmt" class="docker-build-action">
+            <div v-if="pkgMgmt && (envs.packages[env.id]?.length || env.dockerfile_customized)" class="docker-build-action">
               <BaseButton
                 size="sm"
                 :loading="env.docker_build_status === 'building'"
@@ -997,6 +1081,52 @@ function isBrowserConflict(pkg: { name: string; group?: string }): boolean {
 
 .docker-build-action {
   margin-top: 4px;
+}
+
+/* Story V15.5 — custom image / editable Dockerfile */
+.docker-own-image {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0;
+}
+.docker-own-image .form-input {
+  flex: 1 1 240px;
+  max-width: 420px;
+}
+.docker-own-image-hint {
+  flex-basis: 100%;
+  margin: 0;
+}
+.dockerfile-editor {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  resize: vertical;
+  border: 1px solid var(--color-border);
+}
+.dockerfile-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+}
+.dockerfile-import {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  font-size: 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background: var(--color-bg-card, white);
+  color: var(--color-text);
+  cursor: pointer;
+}
+.dockerfile-import:hover {
+  border-color: var(--color-primary-light);
+  color: var(--color-primary-dark);
 }
 
 .docker-build-banner {

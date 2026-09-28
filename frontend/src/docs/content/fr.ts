@@ -1925,6 +1925,34 @@ Login Works
   correctement initialis\u00E9s apr\u00E8s l\u2019installation. Si une initialisation est n\u00E9cessaire,
   un indicateur <strong>initialisation</strong> appara\u00EEt, et une v\u00E9rification pr\u00E9-ex\u00E9cution
   s\u2019assure que la biblioth\u00E8que est pr\u00EAte.
+</p>
+<h4>Dockerfile personnalisé &amp; votre propre image</h4>
+<p>
+  Ouvrez <strong>Dockerfile (voir / modifier)</strong> dans la section Docker pour modifier le
+  Dockerfile généré, ou utilisez <strong>Importer un fichier…</strong> pour charger le vôtre (il n'est
+  enregistré qu'avec <strong>Enregistrer le Dockerfile</strong>). Un Dockerfile enregistré remplace le
+  Dockerfile généré pour tous les builds suivants et porte le badge <strong>Dockerfile personnalisé</strong> ;
+  <strong>Rétablir le Dockerfile généré</strong> revient au Dockerfile basé sur les paquets. Avec un
+  Dockerfile enregistré, un build ne nécessite plus de paquets dans l'environnement. Le fichier doit
+  commencer par une instruction <code>FROM</code> (seules des lignes <code>ARG</code> peuvent la précéder)
+  et est limité à 100 Ko.
+</p>
+<p>
+  Sous <strong>Utiliser votre propre image</strong>, saisissez une référence d'image existante
+  (p. ex. <code>registry.example.com/team/rf-image:1.0</code>). Elle est marquée <strong>Image personnalisée</strong>,
+  n'est jamais signalée comme obsolète et est téléchargée au premier lancement si elle manque localement.
+  Un nouveau build RoboScope (ou <strong>Revenir à l'image construite par RoboScope</strong>) repasse à une
+  image gérée.
+</p>
+<p>
+  <strong>Contrat pour les images et Dockerfiles personnalisés :</strong> le conteneur est lancé avec la
+  commande <code>python -m robot --outputdir /output …</code>, le répertoire de travail
+  <code>/workspace</code> (votre dépôt, monté en lecture seule) et <code>/output</code> (en écriture,
+  pour les résultats). L'image doit donc fournir un <code>python</code> dans le <code>PATH</code> avec
+  <code>robotframework</code> installé, ainsi que toutes les bibliothèques importées par vos tests.
+  Ne définissez pas d'<code>ENTRYPOINT</code> qui absorbe la commande. Enregistrer un Dockerfile et choisir
+  une image demandent la même autorisation qu'un build et sont indisponibles lorsque la gestion des
+  paquets est désactivée.
 </p>`
       },
       {

@@ -2,7 +2,7 @@
 
 import logging
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from fastapi.responses import PlainTextResponse
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -14,6 +14,7 @@ from src.database import get_db
 from src.governance.dependencies import require_package_op
 from src.environments.models import Environment, EnvironmentKeywordCache, EnvironmentPackage
 from src.environments.schemas import (
+    DockerfileUpdate,
     EnvCreate,
     EnvResponse,
     EnvUpdate,
@@ -225,13 +226,28 @@ def get_env(
 def patch_env(
     env_id: int,
     data: EnvUpdate,
+    request: Request,
     db: Session = Depends(get_db),
-    _current_user: User = Depends(require_role(Role.EDITOR)),
+    current_user: User = Depends(require_role(Role.EDITOR)),
 ):
     """Update an environment."""
     env = get_environment(db, env_id)
     if env is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Environment not found")
+    # Story V15.5: choosing which image runs the tests is the same trust level
+    # as building one — gate changes to the image behind the docker_build op.
+    changes = data.model_dump(exclude_unset=True)
+    image_changed = any(
+        k in changes and changes[k] != getattr(env, k)
+        for k in ("docker_image", "docker_image_custom")
+    )
+    if image_changed:
+        require_package_op("docker_build")(request, db, current_user)
+    if changes.get("docker_image_custom") and not changes.get("docker_image", env.docker_image):
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="A custom image requires an image reference",
+        )
     return update_environment(db, env, data)
 
 
@@ -271,10 +287,13 @@ def get_dockerfile(
     db: Session = Depends(get_db),
     _current_user: User = Depends(require_role(Role.EDITOR)),
 ):
-    """Generate and return a Dockerfile for this environment."""
+    """Return the environment's Dockerfile: the user override when set,
+    otherwise one generated from the packages."""
     env = get_environment(db, env_id)
     if env is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Environment not found")
+    if env.dockerfile_override:
+        return PlainTextResponse(env.dockerfile_override)
 
     packages = list_packages(db, env_id)
     if not packages:
@@ -295,6 +314,25 @@ def get_dockerfile(
         packages=pkg_specs,
     )
     return PlainTextResponse(content)
+
+
+@router.put("/{env_id}/dockerfile", response_model=EnvResponse)
+def put_dockerfile(
+    env_id: int,
+    data: DockerfileUpdate,
+    db: Session = Depends(get_db),
+    _current_user: User = Depends(require_package_op("docker_build")),
+):
+    """Save a user-edited/imported Dockerfile (Story V15.5); null or empty
+    content resets to the generated one. Gated like a build: the Dockerfile's
+    RUN steps execute on the Docker host at build time."""
+    env = get_environment(db, env_id)
+    if env is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Environment not found")
+    env.dockerfile_override = data.content
+    db.commit()
+    db.refresh(env)
+    return env
 
 
 @router.post("/{env_id}/docker-build")
@@ -322,8 +360,7 @@ def docker_build(
                 detail="A Docker build is already in progress for this environment.",
             )
 
-    packages = list_packages(db, env_id)
-    if not packages:
+    if not env.dockerfile_override and not list_packages(db, env_id):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Environment has no packages",
