@@ -213,6 +213,15 @@ def _migrate_sqlite(conn) -> None:
             "ALTER TABLE environments ADD COLUMN max_docker_containers INTEGER DEFAULT 1"
         ))
         logger.info("Migration: added max_docker_containers column to environments")
+    # Story V15.5: user-edited Dockerfile + user-provided image flag
+    if "dockerfile_override" not in env_columns:
+        conn.execute(text("ALTER TABLE environments ADD COLUMN dockerfile_override TEXT"))
+        logger.info("Migration: added dockerfile_override column to environments")
+    if "docker_image_custom" not in env_columns:
+        conn.execute(text(
+            "ALTER TABLE environments ADD COLUMN docker_image_custom BOOLEAN NOT NULL DEFAULT 0"
+        ))
+        logger.info("Migration: added docker_image_custom column to environments")
 
     # Phase-4: users.first_login_complete
     result = conn.execute(text("PRAGMA table_info(users)"))
@@ -320,6 +329,19 @@ def _migrate_postgres(conn) -> None:
             "ALTER TABLE environments ADD COLUMN max_docker_containers INTEGER DEFAULT 1"
         ))
         logger.info("Migration: added max_docker_containers column to environments")
+
+    # Story V15.5: user-edited Dockerfile + user-provided image flag
+    for col, ddl in (
+        ("dockerfile_override", "TEXT"),
+        ("docker_image_custom", "BOOLEAN NOT NULL DEFAULT FALSE"),
+    ):
+        result = conn.execute(text(
+            "SELECT column_name FROM information_schema.columns "
+            f"WHERE table_name = 'environments' AND column_name = '{col}'"
+        ))
+        if not result.fetchone():
+            conn.execute(text(f"ALTER TABLE environments ADD COLUMN {col} {ddl}"))
+            logger.info("Migration: added %s column to environments", col)
 
     # Phase-4: users.first_login_complete
     result = conn.execute(text(

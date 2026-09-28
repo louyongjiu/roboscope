@@ -24,16 +24,67 @@ class EnvCreate(BaseModel):
     venv_path: str | None = Field(default=None, max_length=500)
 
 
+_IMAGE_REF_RE = re.compile(r"^\S{1,500}$")
+
+
 class EnvUpdate(BaseModel):
     name: str | None = None
     python_version: str | None = None
     docker_image: str | None = None
+    # Story V15.5: True = docker_image is user-provided (not built by RoboScope).
+    docker_image_custom: bool = False  # only applied when sent (exclude_unset)
     default_runner_type: str | None = None
     max_docker_containers: int | None = None
     is_default: bool | None = None
     description: str | None = None
     index_url: str | None = None
     extra_index_url: str | None = None
+
+    @field_validator("docker_image")
+    @classmethod
+    def _check_image_ref(cls, v: str | None) -> str | None:
+        # Loose reference check (Story V15.5): empty clears, otherwise one
+        # whitespace-free token of at most 500 chars — Docker validates the rest.
+        if v is None or v.strip() == "":
+            return None
+        v = v.strip()
+        if not _IMAGE_REF_RE.match(v):
+            raise ValueError("invalid image reference (no whitespace, max 500 characters)")
+        return v
+
+
+class DockerfileUpdate(BaseModel):
+    """PUT /environments/{id}/dockerfile — null/empty clears the override."""
+
+    content: str | None = None
+
+    @field_validator("content")
+    @classmethod
+    def _check_content(cls, v: str | None) -> str | None:
+        if v is None or v.strip() == "":
+            return None
+        if len(v.encode("utf-8")) > 100 * 1024:
+            raise ValueError("Dockerfile is larger than 100 KB")
+        if "\x00" in v:
+            raise ValueError("Dockerfile must not contain NUL bytes")
+        if not _has_from_instruction(v):
+            raise ValueError(
+                "Dockerfile must start with a FROM instruction (ARG lines may precede it)"
+            )
+        return v
+
+
+def _has_from_instruction(content: str) -> bool:
+    """True when the first instruction (skipping comments, blank lines and
+    leading ARGs, which Docker allows before FROM) is FROM."""
+    for line in content.splitlines():
+        token = line.strip().split(maxsplit=1)[0].upper() if line.strip() else ""
+        if not token or token.startswith("#"):
+            continue
+        if token == "ARG":
+            continue
+        return token == "FROM"
+    return False
 
 
 class EnvResponse(BaseModel):
@@ -45,6 +96,8 @@ class EnvResponse(BaseModel):
     docker_image_built_at: datetime | None = None
     packages_changed_at: datetime | None = None
     docker_image_stale: bool = False
+    docker_image_custom: bool = False
+    dockerfile_customized: bool = False
     docker_build_status: str | None = None
     docker_build_error: str | None = None
     docker_build_log: str | None = None
@@ -67,7 +120,7 @@ class EnvResponse(BaseModel):
         from src.environments.venv_utils import venv_kind
 
         self.venv_kind = venv_kind(self.venv_path)
-        if self.docker_image:
+        if self.docker_image and not self.docker_image_custom:
             if self.docker_image_built_at is None:
                 self.docker_image_stale = True
             elif self.packages_changed_at and self.packages_changed_at > self.docker_image_built_at:

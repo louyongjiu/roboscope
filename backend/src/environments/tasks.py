@@ -738,7 +738,8 @@ def build_docker_image(env_id: int) -> dict:
             if not any(s.split("==")[0].lower() == "robotframework" for s in pkg_specs):
                 pkg_specs.insert(0, "robotframework")
 
-            dockerfile_content = generate_dockerfile(
+            # Story V15.5: a user-edited/imported Dockerfile wins over the generated one.
+            dockerfile_content = env.dockerfile_override or generate_dockerfile(
                 python_version=env.python_version or "3.12",
                 packages=pkg_specs,
             )
@@ -808,6 +809,7 @@ def build_docker_image(env_id: int) -> dict:
             # Update environment's docker_image in DB
             from datetime import datetime
             env.docker_image = tag
+            env.docker_image_custom = False  # a RoboScope build switches back to managed
             env.docker_image_built_at = datetime.now(UTC)
             env.docker_build_status = "success"
             env.docker_build_error = None

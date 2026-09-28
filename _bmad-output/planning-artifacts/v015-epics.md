@@ -26,7 +26,8 @@ to users (see the gate).
 
 **Story files:**
 `_bmad-output/implementation-artifacts/v15-1-junit-xunit-report-export.md`,
-`v15-2-flow-editor-env-var-definition-check.md`, `v15-3-inert-run-options-retry-and-parallel.md`.
+`v15-2-flow-editor-env-var-definition-check.md`, `v15-3-inert-run-options-retry-and-parallel.md`,
+`v15-5-custom-dockerfile-and-image.md`.
 
 ## Cross-cutting rules (from CLAUDE.md, apply to every story)
 
@@ -244,6 +245,36 @@ take design 1. If (a) is frequent, take design 2.
   `gate_advanced_execution` with the launching user** (CLAUDE.md: any writer of `advanced_config` outside `start_run`
   is a code-exec bypass). The same rule would apply if `Schedule.advanced_config` were ever activated.
   Scheduled or unattended launches of such templates stay impossible, because there is no user context for the gate.
+
+---
+
+## Story V15.5: Custom Dockerfile and your own container image
+
+Maintainer request: for the Docker runner, users must be able to (a) edit the generated Dockerfile, (b) import their own
+Dockerfile, and (c) run an existing image instead of a RoboScope-built one. Story file:
+`_bmad-output/implementation-artifacts/v15-5-custom-dockerfile-and-image.md`.
+
+### Design (minimal)
+
+- Two columns on `environments`: `dockerfile_override TEXT NULL`, `docker_image_custom BOOLEAN NOT NULL DEFAULT false`
+  (lightweight migrations + Alembic revision `a9d4c7e2b1f0`).
+- (a)+(b) are one mechanism: `PUT /environments/{id}/dockerfile {content}`; null/empty resets. Import is client-side
+  (`file.text()` into the editor), saved only on Save. `GET /dockerfile` returns the override when set; a build uses it and
+  then does not need packages.
+- (c) `PATCH {docker_image, docker_image_custom: true}`. A custom image is never stale; building a RoboScope image again switches
+  back to managed.
+- Both are gated by `require_package_op("docker_build")` (a Dockerfile's `RUN` steps execute on the host at build time).
+
+### Acceptance criteria
+
+See the story file (AC1–AC8). Contract for custom images: the runner executes `python -m robot --outputdir /output … <target>`
+with working dir `/workspace` (repo, read-only); the image must provide `python` with `robotframework` plus the test libraries,
+and no `ENTRYPOINT` that swallows the command.
+
+### Test plan
+
+Backend pytest (`tests/environments/test_custom_docker.py`), vitest (`EnvironmentDocker.spec.ts`), e2e
+(`environments-custom-docker.spec.ts`, no real Docker build).
 
 ---
 

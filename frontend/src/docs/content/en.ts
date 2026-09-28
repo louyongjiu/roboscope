@@ -1982,6 +1982,32 @@ Login Works
   the Browser library's <code>node_modules</code> are properly initialized after installation.
   If initialization is needed, a status indicator shows <strong>initializing</strong> in the UI,
   and a pre-run check ensures the Browser library is ready before test execution begins.
+</p>
+<h4>Custom Dockerfile &amp; Your Own Image</h4>
+<p>
+  Open <strong>Dockerfile (view / edit)</strong> in the Docker section to change the generated
+  Dockerfile, or use <strong>Import file…</strong> to load your own (it is only stored when you
+  click <strong>Save Dockerfile</strong>). A saved Dockerfile replaces the generated one for every
+  following build and is marked with a <strong>Customized Dockerfile</strong> badge;
+  <strong>Reset to generated</strong> goes back to the package-based Dockerfile. With a saved
+  Dockerfile, a build no longer requires packages in the environment. The file must start with a
+  <code>FROM</code> instruction (only <code>ARG</code> lines may precede it) and is limited to 100 KB.
+</p>
+<p>
+  Under <strong>Use your own image</strong> you can enter an existing image reference
+  (e.g. <code>registry.example.com/team/rf-image:1.0</code>). It is marked <strong>Custom image</strong>,
+  is never reported as outdated, and is pulled on the first run if it is not present locally.
+  Building a RoboScope image again (or <strong>Back to RoboScope-built image</strong>) switches
+  back to a managed image.
+</p>
+<p>
+  <strong>Contract for custom images and Dockerfiles:</strong> the container is started with the
+  command <code>python -m robot --outputdir /output …</code>, the working directory
+  <code>/workspace</code> (your repository, mounted read-only) and <code>/output</code> (writable,
+  for the results). The image must therefore provide a <code>python</code> on the <code>PATH</code>
+  with <code>robotframework</code> installed, plus every library your tests import. Do not set an
+  <code>ENTRYPOINT</code> that swallows the command. Saving a Dockerfile and choosing an image need
+  the same permission as building one, and are unavailable when package management is disabled.
 </p>`
       },
       {
