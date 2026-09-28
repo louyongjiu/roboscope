@@ -27,7 +27,10 @@ dependencies = [
     "websockets>=14.1",
     "apscheduler>=3.10.4",
     "pyyaml>=6.0",
-    "cryptography>=50.0.1",
+    # Do NOT raise above 48.0.x: cryptography 49+ ships no macOS x86_64 wheel
+    # (arm64 only), so the offline macOS-Intel bundle cannot resolve it. With
+    # this floor pip picks 48.0.1 (universal2) there and the newest elsewhere.
+    "cryptography>=48.0.1",
     "colorama>=0.4",
     "robotframework-roboview>=0.0.4",
     # The Heal-library lives upstream in the standalone
