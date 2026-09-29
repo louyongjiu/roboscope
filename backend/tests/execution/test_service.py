@@ -131,7 +131,6 @@ class TestCreateRun:
             tags_include="smoke",
             tags_exclude="slow",
             variables={"ENV": "staging"},
-            parallel=True,
             max_retries=3,
             timeout_seconds=7200,
         )
@@ -144,7 +143,7 @@ class TestCreateRun:
         assert run.tags_include == "smoke"
         assert run.tags_exclude == "slow"
         assert run.variables is not None  # JSON-serialised
-        assert run.parallel is True
+        assert run.parallel is False  # V15.3: parallel=True is rejected
         assert run.max_retries == 3
         assert run.timeout_seconds == 7200
 

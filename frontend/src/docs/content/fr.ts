@@ -1155,6 +1155,15 @@ Recording 21
   Cliquer dessus cr\u00E9e une nouvelle ex\u00E9cution avec la m\u00EAme configuration (d\u00E9p\u00F4t, cible,
   d\u00E9lai) et la met en file d\u2019attente.
 </p>
+<h4>Nouvelles tentatives automatiques</h4>
+<p>
+  <strong>Nouvelles tentatives en cas d\u2019\u00E9chec</strong> (0&ndash;3) dans la bo\u00EEte de
+  lancement relance automatiquement l\u2019ex\u00E9cution <em>compl\u00E8te</em> lorsqu\u2019elle se
+  termine en <code>failed</code> ou <code>timeout</code> &mdash; pas seulement les tests en \u00E9chec.
+  Les ex\u00E9cutions r\u00E9ussies, annul\u00E9es ou en erreur ne sont jamais relanc\u00E9es. Chaque
+  tentative appara\u00EEt comme une ex\u00E9cution distincte avec son propre rapport
+  (&laquo;&nbsp;Tentative n sur m&nbsp;&raquo;). Indisponible avec les options avanc\u00E9es.
+</p>
 <h4>Annuler toutes les ex\u00E9cutions</h4>
 <p>
   Le bouton <strong>Tout annuler</strong> en haut de la page Ex\u00E9cution termine toutes les
@@ -1297,6 +1306,9 @@ Recording 21
   par test (suite, nom, nom long, statut, dur\u00E9e, tags, d\u00E9but/fin et message d\u2019erreur). Les cellules
   CSV commen\u00E7ant par <code>=</code>, <code>+</code>, <code>-</code> ou <code>@</code> sont pr\u00E9fix\u00E9es
   d\u2019une apostrophe afin que les tableurs ne les ex\u00E9cutent pas comme des formules.
+  <strong>Exporter JUnit</strong> t\u00E9l\u00E9charge <code>report_&lt;id&gt;_xunit.xml</code>, la sortie xUnit
+  de Robot Framework lui-m\u00EAme (convertie avec <code>rebot</code>), que Jenkins, GitLab et Azure DevOps
+  affichent dans leurs tableaux de bord de tests.
 </p>`
       },
       {
@@ -1888,6 +1900,9 @@ Login Works
   suite via <code>%{BASE_URL}</code>, p. ex. <code>Should Be Equal    %{BASE_URL}    https://staging</code>.
   Si une variable d\u2019ex\u00E9cution (<code>ROBOT_&lt;nom&gt;</code> dans Docker) porte le m\u00EAme nom,
   la variable d\u2019ex\u00E9cution l\u2019emporte.
+  L\u2019\u00E9diteur de flux v\u00E9rifie chaque <code>%{NAME}</code> par rapport \u00E0 l\u2019environnement du
+  d\u00E9p\u00F4t (le sien, sinon celui par d\u00E9faut) et marque en orange les noms non d\u00E9finis \u2014 un simple
+  avertissement, car l\u2019environnement du serveur peut encore les fournir.
 </p>
 <p>
   Cochez <strong>Secret</strong> pour chiffrer une variable au repos. Les valeurs secr\u00E8tes ne sont
@@ -1925,6 +1940,34 @@ Login Works
   correctement initialis\u00E9s apr\u00E8s l\u2019installation. Si une initialisation est n\u00E9cessaire,
   un indicateur <strong>initialisation</strong> appara\u00EEt, et une v\u00E9rification pr\u00E9-ex\u00E9cution
   s\u2019assure que la biblioth\u00E8que est pr\u00EAte.
+</p>
+<h4>Dockerfile personnalisé &amp; votre propre image</h4>
+<p>
+  Ouvrez <strong>Dockerfile (voir / modifier)</strong> dans la section Docker pour modifier le
+  Dockerfile généré, ou utilisez <strong>Importer un fichier…</strong> pour charger le vôtre (il n'est
+  enregistré qu'avec <strong>Enregistrer le Dockerfile</strong>). Un Dockerfile enregistré remplace le
+  Dockerfile généré pour tous les builds suivants et porte le badge <strong>Dockerfile personnalisé</strong> ;
+  <strong>Rétablir le Dockerfile généré</strong> revient au Dockerfile basé sur les paquets. Avec un
+  Dockerfile enregistré, un build ne nécessite plus de paquets dans l'environnement. Le fichier doit
+  commencer par une instruction <code>FROM</code> (seules des lignes <code>ARG</code> peuvent la précéder)
+  et est limité à 100 Ko.
+</p>
+<p>
+  Sous <strong>Utiliser votre propre image</strong>, saisissez une référence d'image existante
+  (p. ex. <code>registry.example.com/team/rf-image:1.0</code>). Elle est marquée <strong>Image personnalisée</strong>,
+  n'est jamais signalée comme obsolète et est téléchargée au premier lancement si elle manque localement.
+  Un nouveau build RoboScope (ou <strong>Revenir à l'image construite par RoboScope</strong>) repasse à une
+  image gérée.
+</p>
+<p>
+  <strong>Contrat pour les images et Dockerfiles personnalisés :</strong> le conteneur est lancé avec la
+  commande <code>python -m robot --outputdir /output …</code>, le répertoire de travail
+  <code>/workspace</code> (votre dépôt, monté en lecture seule) et <code>/output</code> (en écriture,
+  pour les résultats). L'image doit donc fournir un <code>python</code> dans le <code>PATH</code> avec
+  <code>robotframework</code> installé, ainsi que toutes les bibliothèques importées par vos tests.
+  Ne définissez pas d'<code>ENTRYPOINT</code> qui absorbe la commande. Enregistrer un Dockerfile et choisir
+  une image demandent la même autorisation qu'un build et sont indisponibles lorsque la gestion des
+  paquets est désactivée.
 </p>`
       },
       {

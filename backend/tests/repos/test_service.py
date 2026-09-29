@@ -345,3 +345,20 @@ class TestCheckoutBranch:
         result = checkout_branch("/tmp/repo", "nope")
 
         assert result.startswith("error:")
+
+
+def test_create_keeps_environment_and_pre_run_sync(db_session, admin_user, tmp_path):
+    """The add-project dialog sends environment_id; it used to be dropped."""
+    from src.environments.models import Environment
+
+    env = Environment(name="bound-env", python_version="3.12", created_by=admin_user.id)
+    db_session.add(env)
+    db_session.flush()
+    repo = create_repository(db_session, RepoCreate(
+        name="bound", repo_type="local", local_path=str(tmp_path / "bound"), environment_id=env.id,
+    ), admin_user.id)
+    assert repo.environment_id == env.id
+    git_repo = create_repository(db_session, RepoCreate(
+        name="git-bound", git_url="https://example.com/x.git", pre_run_sync=True,
+    ), admin_user.id)
+    assert git_repo.pre_run_sync is True

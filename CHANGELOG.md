@@ -2,6 +2,57 @@
 
 ## [Unreleased]
 
+## [0.15.0] - 2026-09-28
+
+### Added
+
+- **Custom Dockerfile and your own container image**: in an environment's Docker
+  section the Dockerfile is now editable. Change the generated one or import your
+  own file, save it, and every following build uses it (no packages required);
+  "Reset to generated" goes back. Alternatively enter an existing image under
+  "Use your own image": it is marked as a custom image, never reported as
+  outdated, and pulled on first use; building a RoboScope image again switches
+  back. The image must provide `python` with `robotframework` installed (the
+  container runs `python -m robot`) plus your test libraries. Both actions need
+  the Docker-build permission and are unavailable when package management is
+  disabled.
+- **Flow Editor checks `%{ENV}` references**: each `%{NAME}` in the "Environment
+  variables used" chips and on the node's `%{}` badge is compared against the
+  variable names of the repository's environment (its own, else the default).
+  Names the environment does not define are marked orange with a tooltip; refs
+  with an inline default stay neutral. It is a warning only, since the server's
+  own environment may still provide the variable. Only names are read, never values.
+- **JUnit/xUnit report export**: "Export JUnit" next to "Export CSV"/"Export JSON"
+  (report detail and run panel) downloads `report_<id>_xunit.xml`, Robot
+  Framework's own xUnit output converted with `rebot`, for Jenkins, GitLab and
+  Azure DevOps test dashboards. Also available as
+  `GET /api/v1/reports/{id}/export?format=junit`. Works for uploaded reports and
+  Docker runs; returns 404 when `output.xml` is gone (retention) and 422 when it
+  cannot be converted. Runs still never emit `--xunit`, and advanced run args
+  still reject it.
+- **Automatic retries on failure**: the run dialog has a *Retries on failure*
+  option (0–3). A run that ends `failed` or `timeout` re-executes the whole run
+  until it passes or the retries are used up; passed, cancelled and errored runs
+  are never retried. Each attempt is its own run and report, labelled
+  "Attempt n of m" in the runs table and run details. A retry of a scheduled run
+  stays linked to its schedule, so the next slot never overlaps it. Retries are
+  refused together with advanced run options (422).
+
+### Fixed
+
+- **The environment chosen when adding a project was ignored**: the "Default
+  environment" picked in the add-project dialog (and "pre-run sync" for Git
+  projects) was sent to the server but not stored, so new projects ran against
+  the global default environment until someone changed it on the project card.
+  Both settings are now saved on creation.
+
+### Removed
+
+- **Inert run options**: `parallel: true` on `POST /runs` now returns 422
+  ("Parallel execution is not supported"; `false` is still accepted), and the
+  `max_parallel_runs` setting is no longer seeded or shown — the executor has
+  always run one task at a time.
+
 ## [0.14.0] - 2026-09-24
 
 ### Added

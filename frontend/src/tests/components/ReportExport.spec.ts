@@ -1,6 +1,7 @@
 /**
- * V14.3 — "Export CSV" / "Export JSON" on the report detail view call the
- * export API with the right format and trigger a blob download.
+ * V14.3 / V15.1 — "Export CSV" / "Export JSON" / "Export JUnit" on the report
+ * detail view call the export API with the right format and trigger a blob
+ * download; a failed export surfaces the server detail as a toast.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
@@ -14,7 +15,8 @@ vi.mock('vue-router', () => ({
   useRouter: () => ({ push: vi.fn() }),
 }))
 
-vi.mock('@/api/reports.api', () => ({
+vi.mock('@/api/reports.api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/api/reports.api')>()),
   getReport: vi.fn(() => new Promise(() => {})),
   getReportHtmlBlobUrl: vi.fn(async () => ''),
   getReportZipBlobUrl: vi.fn(),
@@ -60,6 +62,36 @@ describe('ReportDetailView — export buttons', () => {
 
     expect(exportReportResults).toHaveBeenCalledWith(7, fmt)
     expect(click).toHaveBeenCalledTimes(1)
+    click.mockRestore()
+  })
+
+  it('Export JUnit downloads report_<id>_xunit.xml', async () => {
+    const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (this: HTMLAnchorElement) {
+      expect(this.download).toBe('report_7_xunit.xml')
+    })
+    const wrapper = await mountView()
+
+    await wrapper.find('[data-testid="export-junit"]').trigger('click')
+    await flushPromises()
+
+    expect(exportReportResults).toHaveBeenCalledWith(7, 'junit')
+    expect(click).toHaveBeenCalledTimes(1)
+    click.mockRestore()
+  })
+
+  it('a failed export shows the server detail and does not download', async () => {
+    vi.mocked(exportReportResults).mockRejectedValueOnce({
+      response: { data: { detail: 'output.xml not found' } },
+    })
+    const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
+    const wrapper = await mountView()
+
+    await wrapper.find('[data-testid="export-junit"]').trigger('click')
+    await flushPromises()
+
+    expect(click).not.toHaveBeenCalled()
+    const { useUiStore } = await import('@/stores/ui.store')
+    expect(JSON.stringify(useUiStore().toasts)).toContain('output.xml not found')
     click.mockRestore()
   })
 })

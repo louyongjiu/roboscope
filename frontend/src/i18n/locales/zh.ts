@@ -903,7 +903,6 @@ const overrides: Dict = {
     },
     descriptions: {
       defaultRunner: '默认运行器类型（subprocess 或 Docker）。',
-      maxParallelRuns: '并行测试运行的最大数量。',
       defaultTimeout: '运行的默认超时（秒）。',
       gitSyncInterval: 'Git 自动同步间隔（分钟）。',
       reportRetentionDays: '报告保留的天数。',

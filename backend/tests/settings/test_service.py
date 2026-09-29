@@ -199,7 +199,7 @@ class TestSeedDefaultSettings:
         category_map = {s.key: s.category for s in result}
 
         assert category_map["default_runner"] == "execution"
-        assert category_map["max_parallel_runs"] == "execution"
+        assert "max_parallel_runs" not in category_map  # V15.3: retired
         assert category_map["log_level"] == "general"
         assert category_map["report_retention_days"] == "retention"
         assert category_map["docker_default_image"] == "docker"

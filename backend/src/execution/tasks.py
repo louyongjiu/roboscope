@@ -263,6 +263,38 @@ def _get_env_config(session: Session, env_id: int | None) -> dict | None:
     }
 
 
+def _maybe_auto_retry(session: Session, run: ExecutionRun) -> None:
+    """V15.3: re-run a FAILED/TIMEOUT run while retry_count < max_retries.
+
+    Never touches advanced_config: RunCreate refuses max_retries together with
+    advanced_config, and retry_run does not copy it (gate bypass otherwise).
+    ponytail: no backoff, the retry queues right behind this run; add a delay
+    if flaky-infra retries fail too quickly.
+    """
+    if run.status not in (RunStatus.FAILED, RunStatus.TIMEOUT):
+        return
+    if run.retry_count >= run.max_retries:
+        return
+    from src.execution.service import retry_run
+    from src.task_executor import TaskDispatchError, dispatch_task
+
+    new_run = retry_run(session, run, run.triggered_by)
+    # Keep the schedule's overlap guard (V14.1 AC3) aware of the retry.
+    new_run.schedule_id = run.schedule_id
+    session.commit()  # the background session must see the row
+    try:
+        new_run.task_id = dispatch_task(execute_test_run, new_run.id).id
+    except TaskDispatchError as e:
+        # Never strand the committed retry in PENDING (mirrors start_run H3).
+        new_run.status = RunStatus.ERROR
+        new_run.error_message = f"Task dispatch failed: {e}"
+    session.commit()
+    logger.info(
+        "Run %d %s: auto-retry %d/%d queued as run %d",
+        run.id, run.status, new_run.retry_count, run.max_retries, new_run.id,
+    )
+
+
 def execute_test_run(run_id: int) -> dict:
     """Execute a test run in a background thread."""
     with get_sync_session() as session:
@@ -529,6 +561,13 @@ def execute_test_run(run_id: int) -> dict:
                         "Failed to parse report for run %d: %s",
                         run.id, report_exc,
                     )
+
+            # V15.3 — after parse_report so each attempt keeps its own report.
+            try:
+                _maybe_auto_retry(session, run)
+            except Exception:
+                logger.exception("Auto-retry failed for run %d", run.id)
+                session.rollback()
 
             return {
                 "status": run.status,

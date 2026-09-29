@@ -29,7 +29,6 @@ export interface RunCreateRequest {
   tags_include?: string | null
   tags_exclude?: string | null
   variables?: Record<string, string> | null
-  parallel?: boolean
   max_retries?: number
   timeout_seconds?: number
 }

@@ -156,6 +156,8 @@ export interface Environment {
   docker_image_built_at: string | null
   packages_changed_at: string | null
   docker_image_stale: boolean
+  docker_image_custom?: boolean
+  dockerfile_customized?: boolean
   docker_build_status: 'building' | 'success' | 'error' | null
   docker_build_error: string | null
   docker_build_log: string | null

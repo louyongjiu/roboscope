@@ -3,6 +3,9 @@
 import logging
 import re
 import shutil
+import subprocess
+import sys
+import tempfile
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -395,3 +398,29 @@ def detect_missing_libraries(db: Session, report_id: int) -> MissingLibrariesRes
         environment_name=env_name,
         libraries=libraries,
     )
+
+
+def render_xunit(output_xml_path: str) -> bytes:
+    """Convert an RF ``output.xml`` to xUnit XML via ``rebot`` (V15.1).
+
+    Runs in RoboScope's own Python as a subprocess (RF's in-process LOGGER is
+    not thread-safe). The argv is fixed: only the DB-stored path and a temp
+    path reach it — never user input or modifiers (EXEC seam stays untouched).
+    Raises FileNotFoundError if the file is gone, ValueError on rebot failure.
+    """
+    if not output_xml_path or not Path(output_xml_path).is_file():
+        raise FileNotFoundError(output_xml_path)
+    with tempfile.TemporaryDirectory() as tmp:
+        xunit = Path(tmp) / "xunit.xml"
+        argv = [
+            sys.executable, "-m", "robot.rebot",
+            "--output", "NONE", "--log", "NONE", "--report", "NONE",
+            "--nostatusrc", "--xunit", str(xunit), output_xml_path,
+        ]
+        try:
+            proc = subprocess.run(argv, capture_output=True, text=True, timeout=120)
+        except subprocess.TimeoutExpired as exc:
+            raise ValueError("conversion timed out") from exc
+        if proc.returncode != 0 or not xunit.is_file():
+            raise ValueError((proc.stderr or proc.stdout or "rebot failed")[:500])
+        return xunit.read_bytes()

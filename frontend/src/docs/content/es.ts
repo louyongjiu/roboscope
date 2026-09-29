@@ -1182,6 +1182,14 @@ Recording 21
   la misma configuraci\u00F3n (repositorio, destino, tiempo de espera) y se pone
   en cola para su ejecuci\u00F3n.
 </p>
+<h4>Reintentos autom\u00E1ticos</h4>
+<p>
+  <strong>Reintentos en caso de fallo</strong> (0&ndash;3) en el di\u00E1logo de ejecuci\u00F3n vuelve a
+  ejecutar autom\u00E1ticamente la ejecuci\u00F3n <em>completa</em> cuando termina en
+  <code>failed</code> o <code>timeout</code> &mdash; no solo las pruebas fallidas. Las ejecuciones
+  correctas, canceladas o con error nunca se reintentan. Cada intento aparece como una ejecuci\u00F3n
+  propia con su propio informe (&laquo;Intento n de m&raquo;). No disponible con opciones avanzadas.
+</p>
 <h4>Cancelar todas las ejecuciones</h4>
 <p>
   El bot\u00F3n <strong>Cancelar todo</strong> en la parte superior de la p\u00E1gina
@@ -1329,6 +1337,9 @@ Recording 21
   por prueba (suite, nombre, nombre largo, estado, duración, etiquetas, inicio/fin y mensaje de error).
   Las celdas CSV que empiezan por <code>=</code>, <code>+</code>, <code>-</code> o <code>@</code> se
   prefijan con un apóstrofo para que las hojas de cálculo no las ejecuten como fórmulas.
+  <strong>Exportar JUnit</strong> descarga <code>report_&lt;id&gt;_xunit.xml</code>, la salida xUnit propia
+  de Robot Framework (convertida con <code>rebot</code>), que Jenkins, GitLab y Azure DevOps muestran
+  en sus paneles de pruebas.
 </p>`
       },
       {
@@ -1923,6 +1934,9 @@ Login Works
   <code>%{BASE_URL}</code>, p. ej. <code>Should Be Equal    %{BASE_URL}    https://staging</code>.
   Si una variable de ejecuci\u00F3n (<code>ROBOT_&lt;nombre&gt;</code> en Docker) tiene el mismo
   nombre, gana la variable de ejecuci\u00F3n.
+  El editor de flujo comprueba cada <code>%{NAME}</code> con el entorno del repositorio (el suyo o,
+  si no, el predeterminado) y marca en naranja los nombres no definidos: solo es un aviso, ya que
+  el entorno del propio servidor a\u00FAn puede proporcionarlos.
 </p>
 <p>
   Marque una variable como <strong>Secreto</strong> para cifrarla en reposo. Los valores secretos
@@ -1960,6 +1974,33 @@ Login Works
   despu\u00E9s de la instalaci\u00F3n. Si se necesita inicializaci\u00F3n, aparece un indicador
   <strong>inicializando</strong> en la interfaz, y una verificaci\u00F3n previa asegura que
   la biblioteca est\u00E9 lista antes de la ejecuci\u00F3n.
+</p>
+<h4>Dockerfile personalizado y tu propia imagen</h4>
+<p>
+  Abre <strong>Dockerfile (ver / editar)</strong> en la sección Docker para cambiar el Dockerfile
+  generado, o usa <strong>Importar archivo…</strong> para cargar el tuyo (solo se guarda al pulsar
+  <strong>Guardar Dockerfile</strong>). Un Dockerfile guardado sustituye al generado en todas las
+  construcciones siguientes y se marca con la insignia <strong>Dockerfile personalizado</strong>;
+  <strong>Restablecer el generado</strong> vuelve al Dockerfile basado en paquetes. Con un Dockerfile
+  guardado, la construcción ya no requiere paquetes en el entorno. El archivo debe empezar con una
+  instrucción <code>FROM</code> (solo pueden precederla líneas <code>ARG</code>) y está limitado a 100 KB.
+</p>
+<p>
+  En <strong>Usar tu propia imagen</strong> puedes introducir una referencia de imagen existente
+  (p. ej. <code>registry.example.com/team/rf-image:1.0</code>). Se marca como <strong>Imagen propia</strong>,
+  nunca se considera desactualizada y se descarga en la primera ejecución si no existe localmente.
+  Volver a construir una imagen de RoboScope (o <strong>Volver a la imagen construida por RoboScope</strong>)
+  cambia de nuevo a una imagen gestionada.
+</p>
+<p>
+  <strong>Contrato para imágenes y Dockerfiles propios:</strong> el contenedor se inicia con el comando
+  <code>python -m robot --outputdir /output …</code>, el directorio de trabajo <code>/workspace</code>
+  (tu repositorio, montado en solo lectura) y <code>/output</code> (escribible, para los resultados).
+  Por tanto, la imagen debe proporcionar un <code>python</code> en el <code>PATH</code> con
+  <code>robotframework</code> instalado, además de todas las bibliotecas que importan tus pruebas.
+  No definas un <code>ENTRYPOINT</code> que se trague el comando. Guardar un Dockerfile y elegir una imagen
+  requieren el mismo permiso que una construcción y no están disponibles si la gestión de paquetes está
+  desactivada.
 </p>`
       },
       {

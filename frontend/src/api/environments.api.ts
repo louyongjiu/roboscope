@@ -93,6 +93,12 @@ export async function getDockerfile(envId: number): Promise<string> {
   return response.data
 }
 
+/** Save a user-edited/imported Dockerfile; null resets to the generated one. */
+export async function saveDockerfile(envId: number, content: string | null): Promise<Environment> {
+  const response = await apiClient.put<Environment>(`/environments/${envId}/dockerfile`, { content })
+  return response.data
+}
+
 export async function buildDockerImage(envId: number): Promise<{ status: string; image_tag: string }> {
   const response = await apiClient.post<{ status: string; image_tag: string }>(`/environments/${envId}/docker-build`)
   return response.data

@@ -1170,6 +1170,14 @@ Recording 21
   <code>timeout</code>), a <strong>Retry</strong> button appears. Clicking it creates a new
   run with the same configuration (repository, target, timeout) and queues it for execution.
 </p>
+<h4>Automatic retries</h4>
+<p>
+  <strong>Retries on failure</strong> in the run dialog (0&ndash;3) re-executes the
+  <em>whole</em> run automatically when it ends <code>failed</code> or <code>timeout</code>
+  &mdash; it is not a rerun of only the failed tests. Passed, cancelled and errored runs are
+  never retried. Each attempt appears as its own run with its own report, labelled
+  &ldquo;Attempt n of m&rdquo;. Retries are not available together with advanced options.
+</p>
 <h4>Cancel All Runs</h4>
 <p>
   The <strong>Cancel All</strong> button at the top of the Execution page terminates
@@ -1308,6 +1316,9 @@ Recording 21
   test with suite, test name, long name, status, duration, tags, start/end time and error message.
   CSV cells that start with <code>=</code>, <code>+</code>, <code>-</code> or <code>@</code> are
   prefixed with an apostrophe so spreadsheets do not execute them as formulas.
+  <strong>Export JUnit</strong> downloads <code>report_&lt;id&gt;_xunit.xml</code>, Robot Framework's
+  own xUnit output (converted with <code>rebot</code>), which Jenkins, GitLab and Azure DevOps
+  show in their test dashboards.
 </p>`
       },
       {
@@ -1945,6 +1956,9 @@ Login Works
   variables &mdash; for local runs and inside Docker containers. Read them in a suite as
   <code>%{BASE_URL}</code>, e.g. <code>Should Be Equal    %{BASE_URL}    https://staging</code>.
   If a run variable (<code>ROBOT_&lt;name&gt;</code> in Docker) has the same name, the run variable wins.
+  The Flow Editor checks each <code>%{NAME}</code> against the repository's environment (its own,
+  else the default) and marks names it does not define in orange &mdash; a warning only, since the
+  server's own environment may still provide them.
 </p>
 <p>
   Mark a variable as <strong>Secret</strong> to encrypt it at rest. Secret values are never
@@ -1982,6 +1996,32 @@ Login Works
   the Browser library's <code>node_modules</code> are properly initialized after installation.
   If initialization is needed, a status indicator shows <strong>initializing</strong> in the UI,
   and a pre-run check ensures the Browser library is ready before test execution begins.
+</p>
+<h4>Custom Dockerfile &amp; Your Own Image</h4>
+<p>
+  Open <strong>Dockerfile (view / edit)</strong> in the Docker section to change the generated
+  Dockerfile, or use <strong>Import file…</strong> to load your own (it is only stored when you
+  click <strong>Save Dockerfile</strong>). A saved Dockerfile replaces the generated one for every
+  following build and is marked with a <strong>Customized Dockerfile</strong> badge;
+  <strong>Reset to generated</strong> goes back to the package-based Dockerfile. With a saved
+  Dockerfile, a build no longer requires packages in the environment. The file must start with a
+  <code>FROM</code> instruction (only <code>ARG</code> lines may precede it) and is limited to 100 KB.
+</p>
+<p>
+  Under <strong>Use your own image</strong> you can enter an existing image reference
+  (e.g. <code>registry.example.com/team/rf-image:1.0</code>). It is marked <strong>Custom image</strong>,
+  is never reported as outdated, and is pulled on the first run if it is not present locally.
+  Building a RoboScope image again (or <strong>Back to RoboScope-built image</strong>) switches
+  back to a managed image.
+</p>
+<p>
+  <strong>Contract for custom images and Dockerfiles:</strong> the container is started with the
+  command <code>python -m robot --outputdir /output …</code>, the working directory
+  <code>/workspace</code> (your repository, mounted read-only) and <code>/output</code> (writable,
+  for the results). The image must therefore provide a <code>python</code> on the <code>PATH</code>
+  with <code>robotframework</code> installed, plus every library your tests import. Do not set an
+  <code>ENTRYPOINT</code> that swallows the command. Saving a Dockerfile and choosing an image need
+  the same permission as building one, and are unavailable when package management is disabled.
 </p>`
       },
       {

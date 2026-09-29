@@ -1145,6 +1145,15 @@ Recording 21
   \u00DCber den <strong>Wiederholen</strong>-Button wird ein neuer Run mit identischen
   Parametern (Repository, Zielpfad, Timeout) gestartet. Der urspr\u00FCngliche
   Run bleibt im Verlauf erhalten.
+</p>
+<h4>Automatische Wiederholungen</h4>
+<p>
+  <strong>Wiederholungen bei Fehlschlag</strong> im Run-Dialog (0&ndash;3) f\u00FChrt den
+  <em>gesamten</em> Run automatisch erneut aus, wenn er mit <code>failed</code> oder
+  <code>timeout</code> endet &mdash; nicht nur die fehlgeschlagenen Tests. Erfolgreiche,
+  abgebrochene und fehlerhafte (<code>error</code>) Runs werden nie wiederholt. Jeder Versuch
+  erscheint als eigener Run mit eigenem Report (&bdquo;Versuch n von m&ldquo;). Mit erweiterten
+  Optionen sind Wiederholungen nicht verf\u00FCgbar.
 </p>`,
         tip: 'Abgebrochene Runs erzeugen keine Reports. Wenn der Prozess bereits Teilergebnisse geschrieben hat, werden diese nicht verarbeitet.'
       },
@@ -1273,6 +1282,9 @@ Recording 21
   eine Zeile pro Test (Suite, Testname, Langname, Status, Dauer, Tags, Start/Ende und Fehlermeldung).
   CSV-Zellen, die mit <code>=</code>, <code>+</code>, <code>-</code> oder <code>@</code> beginnen,
   erhalten ein vorangestelltes Apostroph, damit Tabellenkalkulationen sie nicht als Formel ausführen.
+  <strong>JUnit exportieren</strong> lädt <code>report_&lt;id&gt;_xunit.xml</code> herunter, die xUnit-Ausgabe
+  von Robot Framework selbst (per <code>rebot</code> konvertiert), die Jenkins, GitLab und Azure DevOps
+  in ihren Test-Dashboards anzeigen.
 </p>`,
         tip: 'Die ZIP-Datei eignet sich ideal zum Archivieren oder Teilen von Ergebnissen mit Teammitgliedern, die keinen RoboScope-Zugang haben.'
       },
@@ -1858,6 +1870,9 @@ Login Works
   wie im Docker-Container. In einer Suite lesen Sie sie als <code>%{BASE_URL}</code>, z.\u202FB.
   <code>Should Be Equal    %{BASE_URL}    https://staging</code>. Hat eine Run-Variable
   (<code>ROBOT_&lt;Name&gt;</code> in Docker) denselben Namen, gewinnt die Run-Variable.
+  Der Flow-Editor prüft jedes <code>%{NAME}</code> gegen die Umgebung des Repositorys (seine
+  eigene, sonst die Standard-Umgebung) und markiert nicht definierte Namen orange — nur eine
+  Warnung, denn die Server-Umgebung kann sie dennoch bereitstellen.
 </p>
 <p>
   Markieren Sie eine Variable als <strong>Geheim</strong>, um sie verschl\u00FCsselt zu speichern.
@@ -1894,6 +1909,33 @@ Login Works
   sind. Falls eine Initialisierung n\u00F6tig ist, zeigt die Oberfl\u00E4che den Status
   <strong>Initialisierung</strong> an, und eine Vorab-Pr\u00FCfung stellt sicher, dass die
   Browser-Library vor der Testausf\u00FChrung bereit ist.
+</p>
+<h4>Eigenes Dockerfile &amp; eigenes Image</h4>
+<p>
+  Öffne im Docker-Bereich <strong>Dockerfile (ansehen / bearbeiten)</strong>, um das generierte
+  Dockerfile zu ändern, oder lade mit <strong>Datei importieren…</strong> dein eigenes (gespeichert
+  wird es erst mit <strong>Dockerfile speichern</strong>). Ein gespeichertes Dockerfile ersetzt das
+  generierte bei allen folgenden Builds und wird mit dem Badge <strong>Angepasstes Dockerfile</strong>
+  markiert; <strong>Auf generiertes zurücksetzen</strong> kehrt zum paketbasierten Dockerfile zurück.
+  Mit gespeichertem Dockerfile braucht ein Build keine Pakete in der Umgebung. Die Datei muss mit einer
+  <code>FROM</code>-Anweisung beginnen (davor sind nur <code>ARG</code>-Zeilen erlaubt) und ist auf 100 KB begrenzt.
+</p>
+<p>
+  Unter <strong>Eigenes Image verwenden</strong> kannst du eine bestehende Image-Referenz eintragen
+  (z. B. <code>registry.example.com/team/rf-image:1.0</code>). Sie wird als <strong>Eigenes Image</strong>
+  markiert, gilt nie als veraltet und wird beim ersten Lauf gepullt, falls sie lokal fehlt. Ein erneuter
+  RoboScope-Build (oder <strong>Zurück zum von RoboScope gebauten Image</strong>) schaltet wieder auf ein
+  verwaltetes Image um.
+</p>
+<p>
+  <strong>Vertrag für eigene Images und Dockerfiles:</strong> Der Container wird mit dem Befehl
+  <code>python -m robot --outputdir /output …</code> gestartet, mit dem Arbeitsverzeichnis
+  <code>/workspace</code> (dein Repository, schreibgeschützt eingebunden) und <code>/output</code>
+  (beschreibbar, für die Ergebnisse). Das Image muss daher ein <code>python</code> im <code>PATH</code>
+  mit installiertem <code>robotframework</code> bereitstellen, dazu alle Bibliotheken, die deine Tests
+  importieren. Setze keinen <code>ENTRYPOINT</code>, der den Befehl verschluckt. Dockerfile speichern und
+  Image wählen erfordern dieselbe Berechtigung wie ein Build und sind bei deaktivierter Paketverwaltung
+  nicht verfügbar.
 </p>`
       },
       {

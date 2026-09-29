@@ -144,6 +144,8 @@ def clone_environment(db: Session, env: Environment, new_name: str, user_id: int
         ),
         user_id,
     )
+    new_env.dockerfile_override = env.dockerfile_override
+    new_env.docker_image_custom = env.docker_image_custom
 
     # Copy packages
     packages = list_packages(db, env.id)
